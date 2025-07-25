@@ -85,9 +85,9 @@ function createWindow() {
     const version = packageJson.version;
 
     const win = new BrowserWindow({
-        width: 1000,
+        width: 950,
         height: 1000,
-        minWidth: 900,
+        minWidth: 850,
         minHeight: 1000,
         webPreferences: {
             nodeIntegration: true,

@@ -1,6 +1,6 @@
 // 캔버스 설정
 const canvas = document.getElementById('gameCanvas');
-canvas.width = 800;
+canvas.width = 750;
 canvas.height = 800;
 const ctx = canvas.getContext('2d');
 
@@ -2558,7 +2558,7 @@ function drawUI() {
     ctx.fillStyle = 'white';
     ctx.font = '16px Arial';
     ctx.textAlign = 'right';
-    ctx.fillText('제작/저작권자:Lee.SS.C', canvas.width - 20, canvas.height - 30);  // 40에서 30으로 변경
+            ctx.fillText('제작/저작권자:Lee.SS.C', canvas.width - 15, canvas.height - 30);  // 40에서 30으로 변경
 
     
     // 특수 무기 게이지 표시
@@ -2614,7 +2614,7 @@ function drawUI() {
     if (bossActive) {
         // 체력바 배경
         ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-        ctx.fillRect(canvas.width/2 - 100, 10, 200, 20);
+        ctx.fillRect(canvas.width/2 - 90, 10, 180, 20);
         
         // 체력바
         const healthPercentage = Math.max(0, bossHealth) / BOSS_SETTINGS.HEALTH;
@@ -2624,7 +2624,7 @@ function drawUI() {
         else healthColor = 'rgba(255, 0, 0, 0.8)';
         
         ctx.fillStyle = healthColor;
-        ctx.fillRect(canvas.width/2 - 100, 10, healthPercentage * 200, 20);
+        ctx.fillRect(canvas.width/2 - 90, 10, healthPercentage * 180, 20);
         
         // 체력 수치
         ctx.fillStyle = 'white';
@@ -2951,7 +2951,7 @@ function handleSecondPlane() {
         // 두 번째 비행기 획득 메시지
         ctx.fillStyle = 'yellow';
         ctx.font = '40px Arial';
-        ctx.fillText('추가 비행기 획득!', canvas.width/2 - 150, canvas.height/2 + 100);  // +100 추가
+        ctx.fillText('추가 비행기 획득!', canvas.width/2 - 120, canvas.height/2 + 100);  // +100 추가
     }
 
     if (hasSecondPlane) {
@@ -2965,7 +2965,7 @@ function handleSecondPlane() {
             // 두 번째 비행기 소멸 메시지
             ctx.fillStyle = 'red';
             ctx.font = '40px Arial';
-            ctx.fillText('추가 비행기 소멸!', canvas.width/2 - 150, canvas.height/2 + 100);  // +100 추가
+            ctx.fillText('추가 비행기 소멸!', canvas.width/2 - 120, canvas.height/2 + 100);  // +100 추가
         }
     }
 }
