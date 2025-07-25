@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            padding-bottom: 80px;  /* 효과음 패널을 위한 여백 추가 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #E0E0E0;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            width: 800px;
+            height: 800px;
+            background-color: black;
+            transform: translateY(-15px);  /* 캔버스를 위로 10픽셀 올림 */
+        }
+        #soundPanel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+            user-select: none;
+            -webkit-user-select: none;
+            cursor: move;
+            z-index: 1000;
+        }
+        #soundPanel.dragging {
+            opacity: 0.8;
+        }
+        #soundPanel .controls {
+            -webkit-app-region: no-drag;
+            cursor: default;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        #soundPanel input[type="range"] {
+            width: 100px;
+            cursor: pointer;
+        }
+        #soundPanel button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 12px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        #soundPanel button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="800"></canvas>
+    
+    <!-- 사운드 컨트롤 패널 -->
+    <div id="soundPanel">
+        <div class="controls">
+            <label for="effectVolume">효과음 볼륨:</label>
+            <input type="range" id="effectVolume" min="0" max="1" step="0.1" value="0.5">
+            <span id="volumeValue">50%</span>
+            <button id="muteBtn">🔊 전체 음소거</button>
+        </div>
+    </div>
+    
+    <!-- 오디오 요소 추가 -->
+    <audio id="shootSound" src="sounds/shoot.mp3" preload="auto"></audio>
+    <audio id="explosionSound" src="sounds/explosion.mp3" preload="auto"></audio>
+    <audio id="collisionSound" src="sounds/collision.mp3" preload="auto"></audio>
+    
+    <script>
+        // 사운드 패널 드래그 기능
+        const soundPanel = document.getElementById('soundPanel');
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+
+        // 포커스를 캔버스로 이동하는 함수
+        function focusCanvas() {
+            setTimeout(() => {
+                document.getElementById('gameCanvas').focus();
+            }, 0);
+        }
+
+        soundPanel.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+
+        function dragStart(e) {
+            if (e.target.closest('.controls')) {
+                return;
+            }
+            
+            window.postMessage('soundControlStart', '*');
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+
+            if (e.target === soundPanel) {
+                isDragging = true;
+                soundPanel.classList.add('dragging');
+            }
+        }
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+
+                xOffset = currentX;
+                yOffset = currentY;
+
+                setTranslate(currentX, currentY, soundPanel);
+            }
+        }
+
+        function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+            soundPanel.classList.remove('dragging');
+            window.postMessage('soundControlEnd', '*');
+            focusCanvas();
+        }
+
+        function setTranslate(xPos, yPos, el) {
+            el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+        }
+
+        // 컨트롤 요소들의 이벤트 처리 개선
+        const controls = document.querySelectorAll('.controls');
+        controls.forEach(control => {
+            // 마우스 이벤트가 끝나면 캔버스에 포커스
+            control.addEventListener('mouseup', focusCanvas);
+            
+            // 컨트롤 요소 클릭 시 이벤트 전파 중단
+            control.addEventListener('click', (e) => {
+                e.stopPropagation();
+                focusCanvas();
+            });
+        });
+
+        // 사운드 패널 클릭 시 이벤트 전파 중단
+        soundPanel.addEventListener('click', (e) => {
+            if (e.target.closest('.controls')) {
+                e.stopPropagation();
+            }
+        });
+
+        // 볼륨 슬라이더 이벤트 처리
+        const volumeSlider = document.getElementById('effectVolume');
+        volumeSlider.addEventListener('mousedown', () => {
+            window.postMessage('soundControlStart', '*');
+        });
+        volumeSlider.addEventListener('mouseup', () => {
+            window.postMessage('soundControlEnd', '*');
+        });
+        volumeSlider.addEventListener('change', () => {
+            window.postMessage('soundControlEnd', '*');
+        });
+
+        // 음소거 버튼 이벤트 처리
+        const muteBtn = document.getElementById('muteBtn');
+        muteBtn.addEventListener('mousedown', () => {
+            window.postMessage('soundControlStart', '*');
+        });
+        muteBtn.addEventListener('mouseup', () => {
+            window.postMessage('soundControlEnd', '*');
+        });
+    </script>
+    
+    <script src="game.js"></script>
+</body>
+</html> 
