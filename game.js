@@ -4029,7 +4029,7 @@ function drawStartScreen() {
     ctx.shadowOffsetY = 5;
 
     // 제목
-    ctx.font = 'bold 60px Arial';
+    ctx.font = 'bold 50px Arial';
     ctx.fillStyle = titleGradient;
     ctx.textAlign = 'center';
     ctx.fillText('PAPER PLANE SHOOTER', canvas.width/2, titleY);
