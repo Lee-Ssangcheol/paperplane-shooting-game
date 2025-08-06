@@ -2637,33 +2637,6 @@ function drawUI() {
             ctx.fillText(`페이즈 ${currentPhase + 1}`, canvas.width/2, 50);
         }
     }
-    
-    // 파워업 상태 표시
-    if (hasSpreadShot) {
-        ctx.fillStyle = '#ffff00';
-        ctx.fillText('확산탄 활성화', 10, 550);  // 450에서 550으로 변경
-    }
-    if (hasShield) {
-        ctx.fillStyle = '#0000ff';
-        ctx.fillText('실드 활성화', 10, 580);  // 480에서 580으로 변경
-    }
-    if (damageMultiplier > 1) {
-        ctx.fillStyle = '#ff0000';
-        ctx.fillText('데미지 2배', 10, 610);  // 510에서 610으로 변경
-    }
-    if (fireRateMultiplier > 1) {
-        ctx.fillStyle = '#ff00ff';
-        ctx.fillText('연사 속도 증가', 10, 640);  // 540에서 640으로 변경
-    }
-    
-    // 총알 크기 정보 표시
-    const currentBulletSize = calculateBulletSize();
-    if (currentBulletSize > baseBulletSize) {
-        ctx.fillStyle = '#ffff00';
-        ctx.font = '16px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText(`총알 크기 증가: ${currentBulletSize}`, 10, 670);  // 570에서 670으로 변경
-    }
 }
 // 게임 시작 이벤트 리스너 수정
 window.addEventListener('load', async () => {
