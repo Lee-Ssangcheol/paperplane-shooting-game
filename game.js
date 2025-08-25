@@ -8,11 +8,13 @@ const ctx = canvas.getContext('2d');
 const shootSound = document.getElementById('shootSound');
 const explosionSound = document.getElementById('explosionSound');
 const collisionSound = document.getElementById('collisionSound');
+const warningSound = document.getElementById('warningSound');
 
 // 사운드 설정
 shootSound.volume = clampVolume(0.4);  // 발사음 볼륨 증가
 explosionSound.volume = clampVolume(0.6);  // 폭발음 볼륨 조정
 collisionSound.volume = clampVolume(0.5);  // 충돌음 볼륨 조정
+warningSound.volume = clampVolume(0.6);  // 경고음 볼륨 설정
 
 // 충돌 사운드 재생 시간 제어를 위한 변수 추가
 let lastCollisionTime = 0;
@@ -639,6 +641,10 @@ async function initializeGame() {
         hasSecondPlane = false;
         secondPlaneTimer = 0;
         
+        // 목숨 깜빡임 효과 초기화
+        isLivesBlinking = false;
+        livesBlinkTimer = 0;
+        
         // 2. 모든 배열 완전 초기화
         score = 0;
         levelScore = 0;
@@ -765,6 +771,10 @@ function restartGame() {
     maxLives = 5;  // 최대 목숨 초기화
     hasSecondPlane = false;
     secondPlaneTimer = 0;
+    
+    // 목숨 깜빡임 효과 초기화
+    isLivesBlinking = false;
+    livesBlinkTimer = 0;
     
     // 2. 모든 배열 완전 초기화
     enemies = [];           // 적 비행기 배열 초기화
@@ -1288,6 +1298,21 @@ function handleCollision() {
     collisionCount++;
     flashTimer = flashDuration;
     
+    // 목숨이 줄어들 때마다 경고음 재생 및 깜빡임 효과 시작
+    if (collisionCount < maxLives) {
+        // 경고음 재생
+        warningSound.currentTime = 0;
+        warningSound.volume = clampVolume(0.6);
+        applyGlobalVolume();
+        warningSound.play().catch(error => {
+            console.log('경고음 재생 실패:', error);
+        });
+        
+        // 목숨 깜빡임 효과 시작
+        isLivesBlinking = true;
+        livesBlinkTimer = livesBlinkDuration;
+    }
+    
     // 플레이어와 미사일 충돌 시 폭발 효과 생성
     explosions.push(new Explosion(
         player.x + player.width/2,
@@ -1674,6 +1699,14 @@ function gameLoop() {
             ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             flashTimer -= 16;
+        }
+        
+        // 목숨 깜빡임 효과 처리
+        if (isLivesBlinking && livesBlinkTimer > 0) {
+            livesBlinkTimer -= 16;
+            if (livesBlinkTimer <= 0) {
+                isLivesBlinking = false;
+            }
         }
 
         // 플레이어 이동 처리
@@ -2548,8 +2581,26 @@ function drawUI() {
         dynamiteDropChance: 0.25
     };
     
-    // 충돌 횟수 표시 (붉은색으로)
-    ctx.fillStyle = 'red';
+    // 충돌 횟수 표시 (깜빡임 효과 포함)
+    if (isLivesBlinking && livesBlinkTimer > 0) {
+        // 깜빡임 효과: 흰 배경에 빨간 텍스트
+        const blinkSpeed = 200; // 깜빡임 속도 (밀리초)
+        const currentTime = Date.now();
+        const isBlinking = Math.floor(currentTime / blinkSpeed) % 2 === 0;
+        
+        if (isBlinking) {
+            // 흰 배경에 빨간 텍스트
+            ctx.fillStyle = 'white';
+            ctx.fillRect(5, 250, 200, 30);
+            ctx.fillStyle = 'red';
+        } else {
+            // 일반 표시
+            ctx.fillStyle = 'red';
+        }
+    } else {
+        // 일반 표시
+        ctx.fillStyle = 'red';
+    }
     ctx.fillText(`남은 목숨: ${maxLives - collisionCount}`, 10, 270);  // 일시정지 다음 줄로 이동
 
     // 특수 무기 게이지 표시
@@ -5259,3 +5310,8 @@ function drawShieldedEnemies() {
 function removeEnemyMissiles(enemy) {
     enemyMissiles = enemyMissiles.filter(missile => missile.parentEnemy !== enemy);
 }
+
+// 목숨 관련 변수 추가
+let livesBlinkTimer = 0;  // 목숨 깜빡임 타이머
+let livesBlinkDuration = 2000;  // 목숨 깜빡임 지속 시간 (2초)
+let isLivesBlinking = false;  // 목숨 깜빡임 상태
