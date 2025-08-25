@@ -1,52 +1,124 @@
-// 캔버스 설정
-const canvas = document.getElementById('gameCanvas');
-canvas.width = 750;
-canvas.height = 800;
-const ctx = canvas.getContext('2d');
+// 캔버스 및 오디오 요소 변수 선언 (나중에 초기화)
+let canvas;
+let ctx;
 
-// 오디오 요소 가져오기
-const shootSound = document.getElementById('shootSound');
-const explosionSound = document.getElementById('explosionSound');
-const collisionSound = document.getElementById('collisionSound');
-const warningSound = document.getElementById('warningSound');
+// 오디오 요소 변수 선언 (나중에 동적으로 생성)
+let shootSound;
+let explosionSound;
+let collisionSound;
+let warningSound;
 
-// 사운드 설정
-shootSound.volume = clampVolume(0.4);  // 발사음 볼륨 증가
-explosionSound.volume = clampVolume(0.6);  // 폭발음 볼륨 조정
-collisionSound.volume = clampVolume(0.5);  // 충돌음 볼륨 조정
-warningSound.volume = clampVolume(0.6);  // 경고음 볼륨 설정
+// 오디오 파일 경로 자동 감지 및 설정
+const audioConfig = {
+    shoot: { src: 'sounds/shoot.mp3', volume: 0.4, preload: 'auto' },
+    explosion: { src: 'sounds/explosion.mp3', volume: 0.6, preload: 'auto' },
+    collision: { src: 'sounds/collision.mp3', volume: 0.5, preload: 'auto' },
+    warning: { src: 'sounds/warning.mp3', volume: 0.6, preload: 'auto' }
+};
 
 // 충돌 사운드 재생 시간 제어를 위한 변수 추가
 let lastCollisionTime = 0;
 const collisionSoundCooldown = 300;  // 충돌음 쿨다운 시간 증가
 
-// 충돌 사운드 길이 제어
-collisionSound.addEventListener('loadedmetadata', () => {
-    // 사운드 길이를 0.8초로 제한
-    collisionSound.duration = Math.min(collisionSound.duration, 0.8);
-});
+// 동적으로 오디오 요소를 생성하고 경로를 자동으로 감지하는 함수
+function createAudioElement(config) {
+    const audio = new Audio();
+    audio.preload = config.preload;
+    
+    // 경로 자동 감지 및 설정
+    const basePaths = [
+        'sounds/',
+        './sounds/',
+        '../sounds/',
+        '/sounds/',
+        window.location.origin + '/sounds/'
+    ];
+    
+    // 파일 존재 여부를 확인하는 함수
+    const checkFileExists = async (url) => {
+        try {
+            const response = await fetch(url, { method: 'HEAD' });
+            return response.ok;
+        } catch {
+            return false;
+        }
+    };
+    
+    // 사용 가능한 경로 찾기
+    const findValidPath = async () => {
+        for (const basePath of basePaths) {
+            const fullPath = basePath + config.src.split('/').pop();
+            if (await checkFileExists(fullPath)) {
+                console.log(`오디오 파일 경로 발견: ${fullPath}`);
+                return fullPath;
+            }
+        }
+        
+        // 기본 경로 반환 (fallback)
+        console.warn(`오디오 파일 경로를 찾을 수 없음: ${config.src}`);
+        return config.src;
+    };
+    
+    // 경로 설정 및 이벤트 리스너 추가
+    findValidPath().then(validPath => {
+        audio.src = validPath;
+        audio.volume = clampVolume(config.volume);
+        
+        // 로드 완료 시 볼륨 설정
+        audio.addEventListener('loadedmetadata', () => {
+            audio.volume = clampVolume(config.volume);
+            console.log(`오디오 로드 완료: ${validPath}`);
+        });
+        
+        // 오류 처리
+        audio.addEventListener('error', (e) => {
+            console.error(`오디오 로드 실패: ${validPath}`, e);
+        });
+    });
+    
+    return audio;
+}
+
+// 오디오 요소들을 동적으로 생성하는 함수
+function initializeAudioElements() {
+    console.log('오디오 요소 초기화 시작...');
+    
+    // 각 오디오 요소 생성
+    shootSound = createAudioElement(audioConfig.shoot);
+    explosionSound = createAudioElement(audioConfig.explosion);
+    collisionSound = createAudioElement(audioConfig.collision);
+    warningSound = createAudioElement(audioConfig.warning);
+    
+    // 충돌 사운드 길이 제어 이벤트 리스너 추가
+    if (collisionSound) {
+        collisionSound.addEventListener('loadedmetadata', () => {
+            // 사운드 길이를 0.8초로 제한
+            if (collisionSound.duration) {
+                collisionSound.duration = Math.min(collisionSound.duration, 0.8);
+            }
+        });
+    }
+    
+    console.log('오디오 요소 초기화 완료');
+}
 
 // 플레이어 우주선
 const player = {
-    x: canvas.width / 2,
+    x: 0,  // 임시로 0으로 설정, 나중에 초기화
     y: 0,  // 임시로 0으로 설정
     width: 58,
     height: 58,
     speed: 8
 };
-// Y 위치를 객체 생성 후 설정
-player.y = canvas.height - player.height - 10;
 
 // 두 번째 비행기
 const secondPlane = {
-    x: canvas.width / 2 - 60,
+    x: 0,  // 임시로 0으로 설정, 나중에 초기화
     y: 0,  // 임시로 0으로 설정
     width: 58,
     height: 58,
     speed: 8
 };
-// Y 위치를 객체 생성 후 설정
-secondPlane.y = canvas.height - secondPlane.height - 10;
 
 // 게임 상태 변수 설정
 let bullets = [];          // 총알 배열
@@ -619,6 +691,13 @@ function setupExitHandlers() {
 // 게임 초기화 함수 수정
 async function initializeGame() {
     console.log('게임 초기화 시작');
+    
+    // canvas가 초기화되었는지 확인
+    if (!canvas || !ctx) {
+        console.warn('Canvas가 아직 초기화되지 않았습니다. initializeGame을 건너뜁니다.');
+        return;
+    }
+    
     isGameActive = true;
     isSoundControlActive = false;
     
@@ -2704,11 +2783,28 @@ window.addEventListener('load', async () => {
             gameVersion = '1.0.0'; // 기본값 설정
         }
 
-        // canvas와 context 확인
-        if (!canvas || !ctx) {
-            throw new Error('Canvas 또는 Context를 찾을 수 없습니다.');
+        // Canvas 및 Context 초기화
+        canvas = document.getElementById('gameCanvas');
+        if (!canvas) {
+            throw new Error('Canvas를 찾을 수 없습니다.');
         }
-        console.log('Canvas 초기화 확인됨');
+        canvas.width = 750;
+        canvas.height = 800;
+        ctx = canvas.getContext('2d');
+        console.log('Canvas 초기화 완료');
+        
+        // 플레이어 위치 초기화
+        player.x = canvas.width / 2;
+        player.y = canvas.height - player.height - 10;
+        
+        secondPlane.x = canvas.width / 2 - 60;
+        secondPlane.y = canvas.height - secondPlane.height - 10;
+        
+        // 시작 화면 변수 초기화
+        subtitleY = canvas.height + 100;
+        
+        // 오디오 요소 동적 생성 및 초기화
+        initializeAudioElements();
         
         // 시작 화면 초기화
         initStartScreen();
@@ -3997,11 +4093,17 @@ const MIN_ENEMY_SPAWN_INTERVAL = 500; // 최소 적 생성 간격 (밀리초)
 // 게임 상태 변수에 추가
 let startScreenAnimation = 0;  // 시작 화면 애니메이션 변수
 let titleY = -100;  // 제목 Y 위치
-let subtitleY = canvas.height + 100;  // 부제목 Y 위치
+let subtitleY = 0;  // 부제목 Y 위치 (나중에 초기화)
 let stars = [];  // 배경 별들
 
 // 시작 화면 초기화 함수
 function initStartScreen() {
+    // canvas가 초기화되었는지 확인
+    if (!canvas || !ctx) {
+        console.warn('Canvas가 아직 초기화되지 않았습니다. initStartScreen을 건너뜁니다.');
+        return;
+    }
+    
     // 배경 별들 생성
     stars = [];
     for (let i = 0; i < 100; i++) {
@@ -4017,6 +4119,12 @@ function initStartScreen() {
 
 // 시작 화면 그리기 함수
 function drawStartScreen() {
+    // canvas가 초기화되었는지 확인
+    if (!canvas || !ctx) {
+        console.warn('Canvas가 아직 초기화되지 않았습니다. drawStartScreen을 건너뜁니다.');
+        return;
+    }
+    
     // 배경 그라데이션
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     gradient.addColorStop(0, '#000033');
@@ -4405,135 +4513,6 @@ function setSoundControlActive(active) {
 // 이벤트 리스너 등록
 document.addEventListener('keydown', handleGameInput);
 document.addEventListener('keyup', handleGameInputRelease);
-
-// 게임 초기화 함수 수정
-async function initializeGame() {
-    console.log('게임 초기화 시작');
-    isGameActive = true;
-    isSoundControlActive = false;
-    
-    try {
-        // 이미지 로딩
-        await loadGameImages();
-        
-        // 종료 이벤트 핸들러 설정
-        setupExitHandlers();
-        
-        // 최고 점수 로드
-        highScore = await loadHighScore();
-        console.log('초기화된 최고 점수:', highScore);
-        
-        // === 모든 게임 요소 완전 초기화 ===
-        
-        // 1. 충돌 및 게임 상태 초기화
-        collisionCount = 0;
-        maxLives = 5;  // 최대 목숨 초기화
-        hasSecondPlane = false;
-        secondPlaneTimer = 0;
-        
-        // 2. 모든 배열 완전 초기화
-        score = 0;
-        levelScore = 0;
-        scoreForSpread = 0;
-        bullets = [];           // 총알 배열 초기화
-        enemies = [];           // 적 비행기 배열 초기화
-        explosions = [];        // 폭발 효과 배열 초기화
-        bombs = [];             // 폭탄 배열 초기화
-        dynamites = [];         // 다이나마이트 배열 초기화
-        powerUps = [];          // 파워업 배열 초기화
-        snakeEnemies = [];      // 뱀 패턴 적 배열 초기화
-        snakeGroups = [];       // 뱀 패턴 그룹 배열 초기화
-        enemyMissiles = [];     // 적 미사일 배열 초기화
-        shieldedEnemies = [];   // 방어막 적 배열 초기화
-        
-        // 3. 게임 상태 초기화
-        isGameOver = false;
-        isPaused = false;
-        flashTimer = 0;
-        gameOverStartTime = null;
-        
-        // 4. 뱀 패턴 상태 초기화
-        isSnakePatternActive = false;
-        snakePatternTimer = 0;
-        snakePatternInterval = 0;
-        lastSnakeGroupTime = 0;
-        
-        // 5. 보스 관련 상태 완전 초기화
-        bossActive = false;
-        bossHealth = 0;
-        bossDestroyed = false;
-        bossPattern = 0;
-        lastBossSpawnTime = Date.now();
-               
-        // 6. 플레이어 초기 위치 설정
-        player.x = canvas.width / 2;
-        player.y = canvas.height - player.height - 10;  // 10에서 player.height + 10으로 변경하여 캔버스 하단에서 10픽셀 위에 위치
-        secondPlane.x = canvas.width / 2 - 60;
-        secondPlane.y = canvas.height - secondPlane.height - 10;  // 10에서 secondPlane.height + 10으로 변경하여 캔버스 하단에서 10픽셀 위에 위치
-        
-        // 7. 게임 타이머 초기화
-        lastEnemySpawnTime = 0;
-        lastShieldedEnemySpawnTime = 0;
-        
-        // 8. 파워업 상태 초기화
-        hasSpreadShot = false;
-        hasShield = false;
-        damageMultiplier = 1;
-        fireRateMultiplier = 1;
-        
-        // 9. 발사 관련 상태 초기화
-        lastFireTime = 0;
-        isSpacePressed = false;
-        spacePressTime = 0;
-        fireDelay = 600;
-        continuousFireDelay = 50;
-        bulletSpeed = 12;
-        baseBulletSize = 4.5;
-        isContinuousFire = false;
-        canFire = true;
-        lastReleaseTime = 0;
-        singleShotCooldown = 500;
-        minPressDuration = 200;
-        minReleaseDuration = 100;
-        
-        // 10. 특수무기 관련 상태 초기화
-        specialWeaponCharged = false;
-        specialWeaponCharge = 0;
-        
-        // 11. 키보드 입력 상태 초기화
-        Object.keys(keys).forEach(key => {
-            keys[key] = false;
-        });
-        
-        // 12. 사운드 관련 상태 초기화
-        lastCollisionTime = 0;
-        lastExplosionTime = 0;
-        
-        // 13. 패턴 추적 시스템 초기화
-        levelBossPatterns.usedPatterns = [];
-        levelBossPatterns.currentLevelPattern = null;
-        
-        console.log('게임 상태 초기화 완료');
-        console.log('초기화된 상태:', {
-            enemies: enemies.length,
-            bullets: bullets.length,
-            explosions: explosions.length,
-            bombs: bombs.length,
-            dynamites: dynamites.length,
-            powerUps: powerUps.length,
-            snakeGroups: snakeGroups.length,
-            bossActive: bossActive,
-            isSnakePatternActive: isSnakePatternActive
-        });
-        
-        // 게임 루프 시작
-        requestAnimationFrame(gameLoop);
-        console.log('게임 루프 시작됨');
-        
-    } catch (error) {
-        console.error('게임 초기화 중 오류:', error);
-    }
-}
 
 // 게임 오버 처리 함수 수정
 function handleGameOver() {
