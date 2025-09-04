@@ -4396,7 +4396,7 @@ function applyGlobalVolume() {
 
 function playExplosionSound(isSnakePattern = false) {
     const currentTime = Date.now();
-    let volumeMultiplier = 1.0;
+    let volumeMultiplier = 2.0;  // 플레이어 폭발음 볼윰 배수
     
     if (isSnakePattern) {
         volumeMultiplier = SNAKE_EXPLOSION_VOLUME_MULTIPLIER;
