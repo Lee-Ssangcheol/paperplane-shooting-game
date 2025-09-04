@@ -4390,13 +4390,13 @@ function clampVolume(volume) {
 function applyGlobalVolume() {
     const vol = isMuted ? 0 : clampVolume(globalVolume);
     shootSound.volume = vol;
-    explosionSound.volume = vol;
+    // explosionSound.volume = vol;
     collisionSound.volume = vol;
 }
 
 function playExplosionSound(isSnakePattern = false) {
     const currentTime = Date.now();
-    let volumeMultiplier = 2.0;  // 플레이어 폭발음 볼윰 배수
+    let volumeMultiplier = 2.0;  // 플레이어 폭발음 볼륨 배수
     
     if (isSnakePattern) {
         volumeMultiplier = SNAKE_EXPLOSION_VOLUME_MULTIPLIER;
