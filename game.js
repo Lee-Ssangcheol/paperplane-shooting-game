@@ -1381,7 +1381,7 @@ function handleCollision() {
     if (collisionCount < maxLives) {
         // 경고음 재생
         warningSound.currentTime = 0;
-        warningSound.volume = clampVolume(0.6);
+        warningSound.volume = clampVolume(0.2); // 경고음 볼륨 조정
         applyGlobalVolume();
         warningSound.play().catch(error => {
             console.log('경고음 재생 실패:', error);
@@ -1409,15 +1409,7 @@ function handleCollision() {
     }
     
     if (currentTime - lastCollisionTime >= collisionSoundCooldown) {
-        collisionSound.currentTime = 0;
-        collisionSound.volume = clampVolume(0.5);
-        // 폭발음으로 변경
-        explosionSound.currentTime = 0;
-        explosionSound.volume = clampVolume(0.6);
-        applyGlobalVolume();
-        explosionSound.play().catch(error => {
-            console.log('오디오 재생 실패:', error);
-        });
+        // 플레이어 생명 감소 시에는 경고음만 재생하고, 다른 충돌/폭발음은 재생하지 않음
         lastCollisionTime = currentTime;
     }
     
