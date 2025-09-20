@@ -2568,6 +2568,12 @@ function handleSpecialWeapon() {
                     (specialWeaponAccumulatedPoints / SPECIAL_WEAPON_STOCK_POINTS) * SPECIAL_WEAPON_MAX_CHARGE,
                     SPECIAL_WEAPON_MAX_CHARGE
                 );
+            } else {
+                // 보유 개수가 0이 되면 충전 상태도 초기화
+                specialWeaponCharged = false;
+                specialWeaponCharge = 0;
+                specialWeaponAccumulatedPoints = 0;
+                console.log('특수무기 사용: 모든 보유 개수 소진, 충전 상태 초기화');
             }
         } else if (specialWeaponCharged) {
             specialWeaponCharged = false;
@@ -2716,7 +2722,7 @@ function drawUI() {
         const chargePercent = Math.floor((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 100);
         const percentText = `특수무기: ${chargePercent}%(보유:0개)`;
         ctx.fillText(percentText, 110, 315);  // 일시정지 다음 줄로 이동
-    } else {
+    } else if (specialWeaponStock > 0) {
         // 깜빡이는 효과를 위한 시간 계산
         const blinkSpeed = 500; // 깜빡임 속도 (밀리초)
         const currentTime = Date.now();
@@ -2750,12 +2756,7 @@ function drawUI() {
         const stockText = `특수무기: ${chargePercent}%(보유:${specialWeaponStock}개)`;
         ctx.fillText(stockText, 110, 315);  // 일시정지 다음 줄로 이동
         
-        // 누적 점수 표시 (보유 개수가 최대가 아닐 때만)
-        if (specialWeaponStock < SPECIAL_WEAPON_MAX_STOCK) {
-            ctx.font = '12px Arial';
-            const progressText = `다음: ${specialWeaponAccumulatedPoints}/${SPECIAL_WEAPON_STOCK_POINTS}`;
-            ctx.fillText(progressText, 110, 330);
-        }
+        // 누적 점수 표시 제거 - 게이지바로 충분히 표시됨
         
         // 디버깅용 로그 (주기적으로 출력)
         if (Math.random() < 0.01) { // 1% 확률로 로그 출력
@@ -2771,6 +2772,29 @@ function drawUI() {
         ctx.font = 'bold 20px Arial';
         ctx.textAlign = 'left';
         ctx.fillText('특수무기 발사(알파벳 "B"키 클릭)', 15, 340);  // 일시정지 다음 줄로 이동
+    } else {
+        // specialWeaponStock이 0이고 specialWeaponCharged가 false인 경우 - 충전 중 표시
+        // 게이지 바 배경
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(10, 300, 200, 20);
+        
+        // 게이지 바
+        ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
+        const gaugeWidth = Math.min((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 200, 200);
+        ctx.fillRect(10, 300, gaugeWidth, 20);
+        
+        // 테두리
+        ctx.strokeStyle = 'cyan';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(10, 300, 200, 20);
+        
+        // 텍스트 표시
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        const chargePercent = Math.floor((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 100);
+        const percentText = `특수무기: ${chargePercent}%(보유:0개)`;
+        ctx.fillText(percentText, 110, 315);
     }
 
     // 제작자 정보 표시
@@ -3071,17 +3095,16 @@ function updateScore(points) {
             specialWeaponStock = 1; // 특수무기 준비 완료 시 보유 개수 1개로 설정
             console.log('특수무기 준비 완료: 보유 개수 1개');
         }
-    } else {
+    } else if (specialWeaponStock > 0) {
         // 특수무기가 준비된 상태에서 추가 점수를 얻으면 보유 개수에 추가
         if (specialWeaponStock < SPECIAL_WEAPON_MAX_STOCK) {
             specialWeaponAccumulatedPoints += points;
-            const newStock = Math.floor(specialWeaponAccumulatedPoints / SPECIAL_WEAPON_STOCK_POINTS);
             
-            if (newStock > specialWeaponStock) {
-                const addedStock = newStock - specialWeaponStock;
-                specialWeaponStock = Math.min(newStock, SPECIAL_WEAPON_MAX_STOCK);
-                specialWeaponAccumulatedPoints = specialWeaponAccumulatedPoints % SPECIAL_WEAPON_STOCK_POINTS;
-                console.log(`특수무기 보유 개수 증가: +${addedStock}개, 현재: ${specialWeaponStock}개, 남은 누적점수: ${specialWeaponAccumulatedPoints}`);
+            // 즉시 보유 개수 증가 처리 (1000점 도달 시 즉시 반영)
+            while (specialWeaponAccumulatedPoints >= SPECIAL_WEAPON_STOCK_POINTS && specialWeaponStock < SPECIAL_WEAPON_MAX_STOCK) {
+                specialWeaponStock++;
+                specialWeaponAccumulatedPoints -= SPECIAL_WEAPON_STOCK_POINTS;
+                console.log(`특수무기 보유 개수 즉시 증가: 현재 ${specialWeaponStock}개, 남은 누적점수: ${specialWeaponAccumulatedPoints}`);
             }
             
             // 추가 무기 획득을 위한 게이지바 실시간 표시 (최대값 제한)
@@ -3090,6 +3113,13 @@ function updateScore(points) {
                 SPECIAL_WEAPON_MAX_CHARGE
             );
         }
+    } else if (specialWeaponCharged && specialWeaponStock === 0) {
+        // specialWeaponCharged가 true이지만 specialWeaponStock이 0인 경우 (모든 특수무기 사용 후)
+        // 이 경우는 발생하지 않아야 하지만, 안전장치로 추가
+        specialWeaponCharged = false;
+        specialWeaponCharge = 0;
+        specialWeaponAccumulatedPoints = 0;
+        console.log('특수무기 상태 초기화: 모든 보유 개수 소진');
     }
     
     // 최고 점수 즉시 업데이트 및 저장
