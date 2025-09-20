@@ -158,7 +158,11 @@ let bossHealth = 0;
 let bossPattern = 0;
 let specialWeaponCharged = false;
 let specialWeaponCharge = 0;
+let specialWeaponStock = 0;  // 특수무기 보유 개수
+let specialWeaponAccumulatedPoints = 0;  // 특수무기 누적 점수
 const SPECIAL_WEAPON_MAX_CHARGE = 5000;  // 특수무기 최대 충전량을 5000으로 설정
+const SPECIAL_WEAPON_MAX_STOCK = 5;  // 최대 보유 가능한 특수무기 개수
+const SPECIAL_WEAPON_STOCK_POINTS = 1000;  // 특수무기 1개당 필요한 점수
 
 // 보스 경고 시스템 변수 추가
 let bossWarning = {
@@ -890,6 +894,8 @@ function restartGame() {
     // 6. 특수무기 관련 상태 초기화
     specialWeaponCharged = false;
     specialWeaponCharge = 0;
+    specialWeaponStock = 0;  // 특수무기 보유 개수 초기화
+    specialWeaponAccumulatedPoints = 0;  // 특수무기 누적 점수 초기화
     
     // 7. 보스 관련 상태 완전 초기화
     bossActive = false;
@@ -2514,7 +2520,7 @@ function handleBulletFiring() {
 
 // 특수 무기 처리 함수 수정
 function handleSpecialWeapon() {
-    if (specialWeaponCharged && keys.KeyB) {  // KeyV를 KeyB로 변경
+    if ((specialWeaponCharged || specialWeaponStock > 0) && keys.KeyB) {  // 보유 개수도 확인
         // 특수 무기 발사 - 더 많은 총알과 강력한 효과
         for (let i = 0; i < 360; i += 5) { // 각도 간격을 10도에서 5도로 감소
             const angle = (i * Math.PI) / 180;
@@ -2551,15 +2557,24 @@ function handleSpecialWeapon() {
             }
         }
         
-        specialWeaponCharged = false;
-        specialWeaponCharge = 0;
+        // 보유 개수 차감 또는 충전 상태 초기화
+        if (specialWeaponStock > 0) {
+            specialWeaponStock--;
+            console.log(`특수무기 사용: 보유 개수 ${specialWeaponStock + 1}개 → ${specialWeaponStock}개`);
+        } else if (specialWeaponCharged) {
+            specialWeaponCharged = false;
+            specialWeaponCharge = 0;
+            console.log('특수무기 사용: 충전 상태에서 사용 완료');
+        }
         
         // 특수 무기 발사 효과음
-        applyGlobalVolume();
-        shootSound.currentTime = 0;
-        shootSound.play().catch(error => {
-            console.log('오디오 재생 실패:', error);
-        });
+        if (shootSound) {
+            applyGlobalVolume();
+            shootSound.currentTime = 0;
+            shootSound.play().catch(error => {
+                console.log('오디오 재생 실패:', error);
+            });
+        }
         
         // B키 상태 초기화
         keys.KeyB = false;
@@ -2675,7 +2690,7 @@ function drawUI() {
     ctx.fillText(`남은 목숨: ${maxLives - collisionCount}`, 10, 270);  // 일시정지 다음 줄로 이동
 
     // 특수 무기 게이지 표시
-    if (!specialWeaponCharged) {
+    if (!specialWeaponCharged && specialWeaponStock === 0) {
         // 게이지 바 배경
         ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.fillRect(10, 300, 200, 20);  // 일시정지 다음 줄로 이동
@@ -2709,8 +2724,20 @@ function drawUI() {
         ctx.fillStyle = isRed ? 'red' : 'cyan';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
-        const percentText = `특수 무기 : ${Math.floor((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 100)}%`;
-        ctx.fillText(percentText, 110, 315);  // 일시정지 다음 줄로 이동
+        const stockText = `특수 무기 보유: ${specialWeaponStock}개`;
+        ctx.fillText(stockText, 110, 315);  // 일시정지 다음 줄로 이동
+        
+        // 누적 점수 표시 (보유 개수가 최대가 아닐 때만)
+        if (specialWeaponStock < SPECIAL_WEAPON_MAX_STOCK) {
+            ctx.font = '12px Arial';
+            const progressText = `다음: ${specialWeaponAccumulatedPoints}/${SPECIAL_WEAPON_STOCK_POINTS}`;
+            ctx.fillText(progressText, 110, 330);
+        }
+        
+        // 디버깅용 로그 (주기적으로 출력)
+        if (Math.random() < 0.01) { // 1% 확률로 로그 출력
+            console.log(`UI 표시 - specialWeaponCharged: ${specialWeaponCharged}, specialWeaponStock: ${specialWeaponStock}`);
+        }
         
         // 준비 완료 메시지 배경
         ctx.fillStyle = isRed ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 0, 255, 0.2)';
@@ -3018,6 +3045,21 @@ function updateScore(points) {
         if (specialWeaponCharge >= SPECIAL_WEAPON_MAX_CHARGE) {
             specialWeaponCharged = true;
             specialWeaponCharge = SPECIAL_WEAPON_MAX_CHARGE;
+            specialWeaponStock = 1; // 특수무기 준비 완료 시 보유 개수 1개로 설정
+            console.log('특수무기 준비 완료: 보유 개수 1개');
+        }
+    } else {
+        // 특수무기가 준비된 상태에서 추가 점수를 얻으면 보유 개수에 추가
+        if (specialWeaponStock < SPECIAL_WEAPON_MAX_STOCK) {
+            specialWeaponAccumulatedPoints += points;
+            const newStock = Math.floor(specialWeaponAccumulatedPoints / SPECIAL_WEAPON_STOCK_POINTS);
+            
+            if (newStock > specialWeaponStock) {
+                const addedStock = newStock - specialWeaponStock;
+                specialWeaponStock = Math.min(newStock, SPECIAL_WEAPON_MAX_STOCK);
+                specialWeaponAccumulatedPoints = specialWeaponAccumulatedPoints % SPECIAL_WEAPON_STOCK_POINTS;
+                console.log(`특수무기 보유 개수 증가: +${addedStock}개, 현재: ${specialWeaponStock}개, 남은 누적점수: ${specialWeaponAccumulatedPoints}`);
+            }
         }
     }
     
@@ -4586,6 +4628,8 @@ function restartGame() {
     // 6. 특수무기 관련 상태 초기화
     specialWeaponCharged = false;
     specialWeaponCharge = 0;
+    specialWeaponStock = 0;  // 특수무기 보유 개수 초기화
+    specialWeaponAccumulatedPoints = 0;  // 특수무기 누적 점수 초기화
     
     // 7. 보스 관련 상태 완전 초기화
     bossActive = false;
