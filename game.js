@@ -2720,7 +2720,7 @@ function drawUI() {
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
         const chargePercent = Math.floor((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 100);
-        const percentText = `특수무기: ${chargePercent}%(보유:0개)`;
+        const percentText = `특수무기: ${chargePercent}%(보유:0/${SPECIAL_WEAPON_MAX_STOCK}개)`;
         ctx.fillText(percentText, 110, 315);  // 일시정지 다음 줄로 이동
     } else if (specialWeaponStock > 0) {
         // 깜빡이는 효과를 위한 시간 계산
@@ -2753,7 +2753,7 @@ function drawUI() {
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
         const chargePercent = Math.floor((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 100);
-        const stockText = `특수무기: ${chargePercent}%(보유:${specialWeaponStock}개)`;
+        const stockText = `특수무기: ${chargePercent}%(보유:${specialWeaponStock}/${SPECIAL_WEAPON_MAX_STOCK}개)`;
         ctx.fillText(stockText, 110, 315);  // 일시정지 다음 줄로 이동
         
         // 누적 점수 표시 제거 - 게이지바로 충분히 표시됨
@@ -2793,7 +2793,7 @@ function drawUI() {
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'center';
         const chargePercent = Math.floor((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 100);
-        const percentText = `특수무기: ${chargePercent}%(보유:0개)`;
+        const percentText = `특수무기: ${chargePercent}%(보유:0/${SPECIAL_WEAPON_MAX_STOCK}개)`;
         ctx.fillText(percentText, 110, 315);
     }
 
@@ -4627,137 +4627,6 @@ function handleGameOver() {
         // 게임 오버 시 캔버스에 포커스
         document.getElementById('gameCanvas').focus();
     }
-}
-
-// 게임 재시작 함수 수정
-function restartGame() {
-    // 게임 상태 초기화
-    isGameActive = true;
-    isSoundControlActive = false;
-    isGameOver = false;
-    
-    console.log('게임 재시작 - 재시작 전 최고 점수:', highScore);
-    
-    // 현재 최고 점수 저장
-    const currentHighScore = Math.max(score, highScore);
-    if (currentHighScore > 0) {
-        saveHighScoreDirectly(currentHighScore, 'restartGame');
-    }
-    
-    // === 모든 게임 요소 완전 초기화 ===
-    
-    // 1. 충돌 및 게임 상태 초기화
-    collisionCount = 0;
-    maxLives = 5;  // 최대 목숨 초기화
-    hasSecondPlane = false;
-    secondPlaneTimer = 0;
-    
-    // 2. 모든 배열 완전 초기화
-    enemies = [];           // 적 비행기 배열 초기화
-    bullets = [];           // 총알 배열 초기화
-    explosions = [];        // 폭발 효과 배열 초기화
-    bombs = [];             // 폭탄 배열 초기화
-    dynamites = [];         // 다이나마이트 배열 초기화
-    powerUps = [];          // 파워업 배열 초기화
-    snakeEnemies = [];      // 뱀 패턴 적 배열 초기화
-    snakeGroups = [];       // 뱀 패턴 그룹 배열 초기화
-    enemyMissiles = [];     // 적 미사일 배열 초기화
-    shieldedEnemies = [];   // 방어막 적 배열 초기화
-    
-    // 3. 플레이어 위치 초기화
-    player.x = canvas.width / 2;
-    player.y = canvas.height - player.height - 10;  // 10에서 player.height + 10으로 변경하여 캔버스 하단에서 10픽셀 위에 위치
-    secondPlane.x = canvas.width / 2 - 60;
-    secondPlane.y = canvas.height - secondPlane.height - 10;  // 10에서 secondPlane.height + 10으로 변경하여 캔버스 하단에서 10픽셀 위에 위치
-    
-    // 4. 게임 타이머 및 상태 초기화
-    gameOverStartTime = null;
-    flashTimer = 0;
-    lastEnemySpawnTime = 0;
-    lastShieldedEnemySpawnTime = 0;
-    lastBossSpawnTime = Date.now();
-    
-    // 5. 점수 및 레벨 초기화
-    score = 0;
-    levelScore = 0;
-    scoreForSpread = 0;
-    gameLevel = 1;
-    levelUpScore = 1000;
-    
-    // 6. 특수무기 관련 상태 초기화
-    specialWeaponCharged = false;
-    specialWeaponCharge = 0;
-    specialWeaponStock = 0;  // 특수무기 보유 개수 초기화
-    specialWeaponAccumulatedPoints = 0;  // 특수무기 누적 점수 초기화
-    
-    // 7. 보스 관련 상태 완전 초기화
-    bossActive = false;
-    bossHealth = 0;
-    bossDestroyed = false;
-    bossPattern = 0;
-    
-    // 8. 뱀 패턴 상태 초기화
-    isSnakePatternActive = false;
-    snakePatternTimer = 0;
-    snakePatternInterval = 0;
-    lastSnakeGroupTime = 0;
-    
-    // 9. 파워업 상태 초기화
-    hasSpreadShot = false;
-    hasShield = false;
-    damageMultiplier = 1;
-    fireRateMultiplier = 1;
-    
-    // 10. 발사 관련 상태 초기화
-    lastFireTime = 0;
-    isSpacePressed = false;
-    spacePressTime = 0;
-    fireDelay = 600;
-    continuousFireDelay = 50;
-    bulletSpeed = 12;
-    baseBulletSize = 4.5;
-    isContinuousFire = false;
-    canFire = true;
-    lastReleaseTime = 0;
-    singleShotCooldown = 500;
-    minPressDuration = 200;
-    minReleaseDuration = 100;
-    
-    // 11. 키보드 입력 상태 초기화
-    Object.keys(keys).forEach(key => {
-        keys[key] = false;
-    });
-    
-    // 12. 게임 화면 상태 초기화
-    isStartScreen = false;
-    isPaused = false;
-    
-    // 13. 사운드 관련 상태 초기화
-    lastCollisionTime = 0;
-    lastExplosionTime = 0;
-    
-    // 14. 패턴 추적 시스템 초기화
-    levelBossPatterns.usedPatterns = [];
-    levelBossPatterns.currentLevelPattern = null;
-    
-    // 15. 캔버스 포커스 설정
-    setTimeout(() => {
-        document.getElementById('gameCanvas').focus();
-    }, 100);
-    
-    console.log('게임 재시작 완료 - 모든 요소 초기화됨');
-    console.log('현재 최고 점수:', highScore);
-    console.log('초기화된 상태:', {
-        enemies: enemies.length,
-        bullets: bullets.length,
-        explosions: explosions.length,
-        bombs: bombs.length,
-        dynamites: dynamites.length,
-        powerUps: powerUps.length,
-        snakeGroups: snakeGroups.length,
-        bossActive: bossActive,
-        isSnakePatternActive: isSnakePatternActive
-    });
 }
 
 // 사운드 컨트롤 이벤트 핸들러 추가
