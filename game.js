@@ -131,7 +131,6 @@ let levelScore = 0;       // 레벨 점수
 let levelUpScore = 1000;  // 레벨업에 필요한 점수
 let score = 0;           // 현재 점수
 let highScore = 0;       // 최고 점수 (초기값 0으로 설정)
-let scoreForSpread = 0;   // 확산탄을 위한 점수
 let hasSecondPlane = false;  // 두 번째 비행기 보유 여부
 let secondPlaneTimer = 0;    // 두 번째 비행기 타이머
 let isPaused = false;     // 일시정지 상태
@@ -557,7 +556,6 @@ const ScoreManager = {
             // 현재 점수 초기화
             score = 0;
             levelScore = 0;
-            scoreForSpread = 0;
             
             console.log('초기화 완료 - 현재 최고 점수:', highScore);
         } catch (error) {
@@ -598,7 +596,6 @@ const ScoreManager = {
             
             score = 0;
             levelScore = 0;
-            scoreForSpread = 0;
             gameLevel = 1;
             
             highScore = await this.getHighScore();
@@ -731,7 +728,6 @@ async function initializeGame() {
         // 2. 모든 배열 완전 초기화
         score = 0;
         levelScore = 0;
-        scoreForSpread = 0;
         bullets = [];           // 총알 배열 초기화
         enemies = [];           // 적 비행기 배열 초기화
         explosions = [];        // 폭발 효과 배열 초기화
@@ -887,7 +883,6 @@ function restartGame() {
     // 5. 점수 및 레벨 초기화
     score = 0;
     levelScore = 0;
-    scoreForSpread = 0;
     gameLevel = 1;
     levelUpScore = 1000;
     
@@ -910,7 +905,6 @@ function restartGame() {
     lastSnakeGroupTime = 0;
     
     // 9. 파워업 상태 초기화
-    hasSpreadShot = false;
     hasShield = false;
     damageMultiplier = 1;
     fireRateMultiplier = 1;
@@ -2458,62 +2452,28 @@ function handleBulletFiring() {
         
         lastFireTime = currentTime;
         
-        // 총알 발사
-        if (hasSpreadShot) {
-            // 확산탄 발사 (3배 증가)
-            for (let i = -9; i <= 9; i++) {
-                const angle = (i * 4) * (Math.PI / 180); // 각도 간격을 줄여서 더 조밀하게
-                const bullet = {
-                    x: player.x + player.width/2,
-                    y: player.y,
-                    width: currentBulletSize,
-                    height: currentBulletSize * 2,
-                    speed: bulletSpeed,
-                    angle: angle,
-                    damage: 100 * damageMultiplier
-                };
-                bullets.push(bullet);
-            }
-        } else {
-            // 일반 총알 발사
+        // 일반 총알 발사
+        const bullet = {
+            x: player.x + player.width/2,
+            y: player.y,
+            width: currentBulletSize,
+            height: currentBulletSize * 2,
+            speed: bulletSpeed,
+            damage: 100 * damageMultiplier
+        };
+        bullets.push(bullet);
+        
+        // 두 번째 비행기 발사
+        if (hasSecondPlane) {
             const bullet = {
-                x: player.x + player.width/2,
-                y: player.y,
+                x: secondPlane.x + secondPlane.width/2,
+                y: secondPlane.y,
                 width: currentBulletSize,
                 height: currentBulletSize * 2,
                 speed: bulletSpeed,
                 damage: 100 * damageMultiplier
             };
             bullets.push(bullet);
-        }
-        
-        // 두 번째 비행기 발사
-        if (hasSecondPlane) {
-            if (hasSpreadShot) {
-                for (let i = -9; i <= 9; i++) {
-                    const angle = (i * 4) * (Math.PI / 180); // 각도 간격을 줄여서 더 조밀하게
-                    const bullet = {
-                        x: secondPlane.x + secondPlane.width/2,
-                        y: secondPlane.y,
-                        width: currentBulletSize,
-                        height: currentBulletSize * 2,
-                        speed: bulletSpeed,
-                        angle: angle,
-                        damage: 100 * damageMultiplier
-                    };
-                    bullets.push(bullet);
-                }
-            } else {
-                const bullet = {
-                    x: secondPlane.x + secondPlane.width/2,
-                    y: secondPlane.y,
-                    width: currentBulletSize,
-                    height: currentBulletSize * 2,
-                    speed: bulletSpeed,
-                    damage: 100 * damageMultiplier
-                };
-                bullets.push(bullet);
-            }
         }
     }
 }
@@ -2637,15 +2597,14 @@ function drawUI() {
     ctx.fillText(`다음 레벨까지: ${Math.max(0, levelUpScore - levelScore)}`, 10, 90);
     ctx.fillText(`최고 점수: ${highScore}`, 10, 120);
     ctx.fillText(`최고 점수 리셋: R키`, 10, 150);
-    ctx.fillText(`다음 확산탄까지: ${2000 - scoreForSpread}점`, 10, 180);
     if (!hasSecondPlane) {
         const nextPlaneScore = Math.ceil(score / 4000) * 4000;
-        ctx.fillText(`다음 추가 비행기까지: ${nextPlaneScore - score}점`, 10, 210);
+        ctx.fillText(`다음 추가 비행기까지: ${nextPlaneScore - score}점`, 10, 180);
     } else {
         const remainingTime = Math.ceil((10000 - (Date.now() - secondPlaneTimer)) / 1000);
-        ctx.fillText(`추가 비행기 남은 시간: ${remainingTime}초`, 10, 210);
+        ctx.fillText(`추가 비행기 남은 시간: ${remainingTime}초`, 10, 180);
     }
-    ctx.fillText(`일시정지: P키`, 10, 240);
+    ctx.fillText(`일시정지: P키`, 10, 210);
     
     // 일시정지 상태 표시
     if (isPaused) {
@@ -2702,18 +2661,18 @@ function drawUI() {
         // 일반 표시
         ctx.fillStyle = 'red';
     }
-    ctx.fillText(`남은 목숨: ${maxLives - collisionCount}`, 10, 270);  // 일시정지 다음 줄로 이동
+    ctx.fillText(`남은 목숨: ${maxLives - collisionCount}`, 10, 240);  // 일시정지 다음 줄로 이동
 
     // 특수 무기 게이지 표시
     if (!specialWeaponCharged && specialWeaponStock === 0) {
         // 게이지 바 배경
         ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fillRect(10, 300, 200, 20);  // 일시정지 다음 줄로 이동
+        ctx.fillRect(10, 270, 200, 20);  // 일시정지 다음 줄로 이동
         
         // 게이지 바
         ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
         const gaugeWidth = Math.min((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 200, 200);
-        ctx.fillRect(10, 300, gaugeWidth, 20);  // 일시정지 다음 줄로 이동
+        ctx.fillRect(10, 270, gaugeWidth, 20);  // 일시정지 다음 줄로 이동
         
         // 게이지 바 위에 텍스트 표시
         ctx.fillStyle = 'white';
@@ -2721,7 +2680,7 @@ function drawUI() {
         ctx.textAlign = 'center';
         const chargePercent = Math.floor((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 100);
         const percentText = `특수무기: ${chargePercent}%(보유:0/${SPECIAL_WEAPON_MAX_STOCK}개)`;
-        ctx.fillText(percentText, 110, 315);  // 일시정지 다음 줄로 이동
+        ctx.fillText(percentText, 110, 285);  // 일시정지 다음 줄로 이동
     } else if (specialWeaponStock > 0) {
         // 깜빡이는 효과를 위한 시간 계산
         const blinkSpeed = 500; // 깜빡임 속도 (밀리초)
@@ -2730,23 +2689,23 @@ function drawUI() {
         
         // 배경색 설정 (게이지 바)
         ctx.fillStyle = isRed ? 'rgba(255, 0, 0, 0.3)' : 'rgba(0, 0, 255, 0.3)';
-        ctx.fillRect(10, 300, 200, 20);  // 일시정지 다음 줄로 이동
+        ctx.fillRect(10, 270, 200, 20);  // 일시정지 다음 줄로 이동
         
         // 게이지 바 - 추가 무기 획득을 위한 실시간 표시
         if (specialWeaponStock < SPECIAL_WEAPON_MAX_STOCK) {
             ctx.fillStyle = isRed ? 'rgba(255, 0, 0, 0.8)' : 'rgba(0, 255, 255, 0.8)';
             const gaugeWidth = Math.min((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 200, 200);
-            ctx.fillRect(10, 300, gaugeWidth, 20);
+            ctx.fillRect(10, 270, gaugeWidth, 20);
         } else {
             // 최대 보유 개수에 도달한 경우 100% 표시
             ctx.fillStyle = isRed ? 'rgba(255, 0, 0, 0.8)' : 'rgba(0, 255, 255, 0.8)';
-            ctx.fillRect(10, 300, 200, 20);
+            ctx.fillRect(10, 270, 200, 20);
         }
         
         // 테두리 효과
         ctx.strokeStyle = isRed ? 'red' : 'cyan';
         ctx.lineWidth = 2;
-        ctx.strokeRect(10, 300, 200, 20);  // 일시정지 다음 줄로 이동
+        ctx.strokeRect(10, 270, 200, 20);  // 일시정지 다음 줄로 이동
         
         // 게이지 바 위에 텍스트 표시
         ctx.fillStyle = isRed ? 'red' : 'cyan';
@@ -2754,7 +2713,7 @@ function drawUI() {
         ctx.textAlign = 'center';
         const chargePercent = Math.floor((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 100);
         const stockText = `특수무기: ${chargePercent}%(보유:${specialWeaponStock}/${SPECIAL_WEAPON_MAX_STOCK}개)`;
-        ctx.fillText(stockText, 110, 315);  // 일시정지 다음 줄로 이동
+        ctx.fillText(stockText, 110, 285);  // 일시정지 다음 줄로 이동
         
         // 누적 점수 표시 제거 - 게이지바로 충분히 표시됨
         
@@ -2765,28 +2724,28 @@ function drawUI() {
         
         // 준비 완료 메시지 배경
         ctx.fillStyle = isRed ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 0, 255, 0.2)';
-        ctx.fillRect(10, 320, 300, 30);  // 일시정지 다음 줄로 이동
+        ctx.fillRect(10, 290, 300, 30);  // 일시정지 다음 줄로 이동
         
         // 텍스트 색상 설정
         ctx.fillStyle = isRed ? 'red' : 'cyan';
         ctx.font = 'bold 20px Arial';
         ctx.textAlign = 'left';
-        ctx.fillText('특수무기 발사(알파벳 "B"키 클릭)', 15, 340);  // 일시정지 다음 줄로 이동
+        ctx.fillText('특수무기 발사(알파벳 "B"키 클릭)', 15, 310);  // 일시정지 다음 줄로 이동
     } else {
         // specialWeaponStock이 0이고 specialWeaponCharged가 false인 경우 - 충전 중 표시
         // 게이지 바 배경
         ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fillRect(10, 300, 200, 20);
+        ctx.fillRect(10, 270, 200, 20);
         
         // 게이지 바
         ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
         const gaugeWidth = Math.min((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 200, 200);
-        ctx.fillRect(10, 300, gaugeWidth, 20);
+        ctx.fillRect(10, 270, gaugeWidth, 20);
         
         // 테두리
         ctx.strokeStyle = 'cyan';
         ctx.lineWidth = 2;
-        ctx.strokeRect(10, 300, 200, 20);
+        ctx.strokeRect(10, 270, 200, 20);
         
         // 텍스트 표시
         ctx.fillStyle = 'white';
@@ -2794,7 +2753,7 @@ function drawUI() {
         ctx.textAlign = 'center';
         const chargePercent = Math.floor((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 100);
         const percentText = `특수무기: ${chargePercent}%(보유:0/${SPECIAL_WEAPON_MAX_STOCK}개)`;
-        ctx.fillText(percentText, 110, 315);
+        ctx.fillText(percentText, 110, 285);
     }
 
     // 제작자 정보 표시
@@ -3180,45 +3139,6 @@ function handleSecondPlane() {
     }
 }
 
-// 확산탄 처리 함수 추가
-function handleSpreadShot() {
-    if (scoreForSpread >= 2000) {
-        // 24발의 확산탄을 원형으로 발사 (3배 증가)
-        for (let i = 0; i < 24; i++) {
-            const angle = (i * 15) * (Math.PI / 180); // 360도 / 24 = 15도 간격
-            const missile = {
-                x: player.x + player.width/2,
-                y: player.y,
-                width: 10,
-                height: 25,
-                speed: 12,
-                angle: angle,
-                isSpread: true
-            };
-            bullets.push(missile);
-
-            // 두 번째 비행기가 있으면 확산탄 발사
-            if (hasSecondPlane) {
-                const secondMissile = {
-                    x: secondPlane.x + secondPlane.width/2,
-                    y: secondPlane.y,
-                    width: 10,
-                    height: 25,
-                    speed: 12,
-                    angle: angle,
-                    isSpread: true
-                };
-                bullets.push(secondMissile);
-            }
-        }
-        applyGlobalVolume();
-        shootSound.currentTime = 0;
-        shootSound.play().catch(error => {
-            console.log('오디오 재생 실패:', error);
-        });
-        scoreForSpread = 0;
-    }
-}
 
 // 총알 이동 및 충돌 체크 함수 수정
 function handleBullets() {
@@ -4140,7 +4060,6 @@ function applyPowerUp(type) {
 
 // 게임 상태 변수에 추가
 let powerUps = [];
-let hasSpreadShot = false;
 let hasShield = false;
 let damageMultiplier = 1;
 let fireRateMultiplier = 1;
