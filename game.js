@@ -3394,7 +3394,7 @@ function handleBullets() {
 
 // 보스 관련 상수 추가
 const BOSS_SETTINGS = {
-    HEALTH: 1000,        // 기본 체력
+    HEALTH: 3000,        // 기본 체력 (30발 피격으로 파괴)
     DAMAGE: 50,          // 보스 총알 데미지
     SPEED: 2,           // 보스 이동 속도
     BULLET_SPEED: 5,    // 보스 총알 속도
@@ -3402,9 +3402,9 @@ const BOSS_SETTINGS = {
     SPAWN_INTERVAL: 30000,  // 보스 출현 간격 (30초)
     BONUS_SCORE: 500,    // 보스 처치 보너스 점수를 500으로 설정
     PHASE_THRESHOLDS: [  // 페이즈 전환 체력 임계값
-        { health: 750, speed: 2.5, bulletSpeed: 6 },
-        { health: 500, speed: 3, bulletSpeed: 7 },
-        { health: 250, speed: 3.5, bulletSpeed: 8 }
+        { health: 2250, speed: 2.5, bulletSpeed: 6 },
+        { health: 1500, speed: 3, bulletSpeed: 7 },
+        { health: 750, speed: 3.5, bulletSpeed: 8 }
     ]
 };
 
