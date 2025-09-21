@@ -1832,8 +1832,6 @@ function gameLoop() {
         // 방어막 적 업데이트
         updateShieldedEnemies();
 
-        // 확산탄 처리
-        handleSpreadShot();
 
         // 두 번째 비행기 처리
         handleSecondPlane();
@@ -2651,7 +2649,7 @@ function drawUI() {
         if (isBlinking) {
             // 흰 배경에 빨간 텍스트
             ctx.fillStyle = 'white';
-            ctx.fillRect(5, 250, 200, 30);
+            ctx.fillRect(5, 225, 200, 30);
             ctx.fillStyle = 'red';
         } else {
             // 일반 표시
@@ -2661,18 +2659,18 @@ function drawUI() {
         // 일반 표시
         ctx.fillStyle = 'red';
     }
-    ctx.fillText(`남은 목숨: ${maxLives - collisionCount}`, 10, 240);  // 일시정지 다음 줄로 이동
+    ctx.fillText(`남은 목숨: ${maxLives - collisionCount}`, 10, 245);  // 일시정지 다음 줄로 이동
 
     // 특수 무기 게이지 표시
     if (!specialWeaponCharged && specialWeaponStock === 0) {
         // 게이지 바 배경
         ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fillRect(10, 270, 200, 20);  // 일시정지 다음 줄로 이동
+        ctx.fillRect(10, 275, 200, 20);  // 일시정지 다음 줄로 이동
         
         // 게이지 바
         ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
         const gaugeWidth = Math.min((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 200, 200);
-        ctx.fillRect(10, 270, gaugeWidth, 20);  // 일시정지 다음 줄로 이동
+        ctx.fillRect(10, 275, gaugeWidth, 20);  // 일시정지 다음 줄로 이동
         
         // 게이지 바 위에 텍스트 표시
         ctx.fillStyle = 'white';
@@ -2680,7 +2678,7 @@ function drawUI() {
         ctx.textAlign = 'center';
         const chargePercent = Math.floor((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 100);
         const percentText = `특수무기: ${chargePercent}%(보유:0/${SPECIAL_WEAPON_MAX_STOCK}개)`;
-        ctx.fillText(percentText, 110, 285);  // 일시정지 다음 줄로 이동
+        ctx.fillText(percentText, 110, 290);  // 일시정지 다음 줄로 이동
     } else if (specialWeaponStock > 0) {
         // 깜빡이는 효과를 위한 시간 계산
         const blinkSpeed = 500; // 깜빡임 속도 (밀리초)
@@ -2689,23 +2687,23 @@ function drawUI() {
         
         // 배경색 설정 (게이지 바)
         ctx.fillStyle = isRed ? 'rgba(255, 0, 0, 0.3)' : 'rgba(0, 0, 255, 0.3)';
-        ctx.fillRect(10, 270, 200, 20);  // 일시정지 다음 줄로 이동
+        ctx.fillRect(10, 275, 200, 20);  // 일시정지 다음 줄로 이동
         
         // 게이지 바 - 추가 무기 획득을 위한 실시간 표시
         if (specialWeaponStock < SPECIAL_WEAPON_MAX_STOCK) {
             ctx.fillStyle = isRed ? 'rgba(255, 0, 0, 0.8)' : 'rgba(0, 255, 255, 0.8)';
             const gaugeWidth = Math.min((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 200, 200);
-            ctx.fillRect(10, 270, gaugeWidth, 20);
+            ctx.fillRect(10, 275, gaugeWidth, 20);
         } else {
             // 최대 보유 개수에 도달한 경우 100% 표시
             ctx.fillStyle = isRed ? 'rgba(255, 0, 0, 0.8)' : 'rgba(0, 255, 255, 0.8)';
-            ctx.fillRect(10, 270, 200, 20);
+            ctx.fillRect(10, 275, 200, 20);
         }
         
         // 테두리 효과
         ctx.strokeStyle = isRed ? 'red' : 'cyan';
         ctx.lineWidth = 2;
-        ctx.strokeRect(10, 270, 200, 20);  // 일시정지 다음 줄로 이동
+        ctx.strokeRect(10, 275, 200, 20);  // 일시정지 다음 줄로 이동
         
         // 게이지 바 위에 텍스트 표시
         ctx.fillStyle = isRed ? 'red' : 'cyan';
@@ -2713,7 +2711,7 @@ function drawUI() {
         ctx.textAlign = 'center';
         const chargePercent = Math.floor((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 100);
         const stockText = `특수무기: ${chargePercent}%(보유:${specialWeaponStock}/${SPECIAL_WEAPON_MAX_STOCK}개)`;
-        ctx.fillText(stockText, 110, 285);  // 일시정지 다음 줄로 이동
+        ctx.fillText(stockText, 110, 290);  // 일시정지 다음 줄로 이동
         
         // 누적 점수 표시 제거 - 게이지바로 충분히 표시됨
         
@@ -2724,28 +2722,28 @@ function drawUI() {
         
         // 준비 완료 메시지 배경
         ctx.fillStyle = isRed ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 0, 255, 0.2)';
-        ctx.fillRect(10, 290, 300, 30);  // 일시정지 다음 줄로 이동
+        ctx.fillRect(10, 295, 300, 30);  // 일시정지 다음 줄로 이동
         
         // 텍스트 색상 설정
         ctx.fillStyle = isRed ? 'red' : 'cyan';
         ctx.font = 'bold 20px Arial';
         ctx.textAlign = 'left';
-        ctx.fillText('특수무기 발사(알파벳 "B"키 클릭)', 15, 310);  // 일시정지 다음 줄로 이동
+        ctx.fillText('특수무기 발사(알파벳 "B"키 클릭)', 15, 315);  // 일시정지 다음 줄로 이동
     } else {
         // specialWeaponStock이 0이고 specialWeaponCharged가 false인 경우 - 충전 중 표시
         // 게이지 바 배경
         ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.fillRect(10, 270, 200, 20);
+        ctx.fillRect(10, 275, 200, 20);
         
         // 게이지 바
         ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
         const gaugeWidth = Math.min((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 200, 200);
-        ctx.fillRect(10, 270, gaugeWidth, 20);
+        ctx.fillRect(10, 275, gaugeWidth, 20);
         
         // 테두리
         ctx.strokeStyle = 'cyan';
         ctx.lineWidth = 2;
-        ctx.strokeRect(10, 270, 200, 20);
+        ctx.strokeRect(10, 275, 200, 20);
         
         // 텍스트 표시
         ctx.fillStyle = 'white';
@@ -2753,7 +2751,7 @@ function drawUI() {
         ctx.textAlign = 'center';
         const chargePercent = Math.floor((specialWeaponCharge / SPECIAL_WEAPON_MAX_CHARGE) * 100);
         const percentText = `특수무기: ${chargePercent}%(보유:0/${SPECIAL_WEAPON_MAX_STOCK}개)`;
-        ctx.fillText(percentText, 110, 285);
+        ctx.fillText(percentText, 110, 290);
     }
 
     // 제작자 정보 표시
@@ -3042,7 +3040,6 @@ function handleGameOver() {
 // 점수 증가 함수 수정
 function updateScore(points) {
     score += points;
-    scoreForSpread += points;
     levelScore += points;
     
     // 특수 무기 게이지 증가
