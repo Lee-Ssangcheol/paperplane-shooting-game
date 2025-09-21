@@ -3968,12 +3968,12 @@ function getBulletColor(pattern, bulletType) {
         // 기존 패턴들
         'basic': '#FF0000',           // 빨간색
         'circle_shot': '#00FF00',     // 초록색
-        'cross_shot': '#0000FF',      // 파란색
+        'cross_shot': '#00FF80',      // 청녹색
         'spiral_shot': '#FFFF00',     // 노란색
         'wave_shot': '#FF00FF',       // 마젠타
         'diamond_shot': '#00FFFF',    // 시안
         'random_spread': '#FFA500',   // 오렌지
-        'double_spiral': '#800080',   // 퍼플
+        'double_spiral': '#DDA0DD',   // 플럼 (밝은 퍼플)
         'triple_wave': '#FFC0CB',     // 핑크
         'targeted_shot': '#FFD700',   // 골드
         'burst_shot': '#FF6347',      // 토마토
@@ -3981,11 +3981,11 @@ function getBulletColor(pattern, bulletType) {
         'heart_shot': '#FF69B4',      // 핫핑크
         'star_shot': '#FFD700',       // 골드
         'flower_shot': '#FF1493',     // 딥핑크
-        'butterfly_shot': '#9370DB',  // 퍼플
-        'spiral_wave': '#00CED1',     // 다크터콰이즈
+        'butterfly_shot': '#BA55D3',  // 미디엄오키드 (밝은 퍼플)
+        'spiral_wave': '#40E0D0',     // 터콰이즈 (밝은 터콰이즈)
         'concentric_circles': '#FF6347', // 토마토
         'firework_shot': '#FF4500',   // 오렌지레드
-        'chaos_shot': '#8B0000',      // 다크레드
+        'chaos_shot': '#FF6B6B',      // 밝은 빨간색
         'normal': '#FF0000'           // 기본 빨간색
     };
     return colorMap[pattern] || colorMap[bulletType] || '#FF0000';
