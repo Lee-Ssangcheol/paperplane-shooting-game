@@ -897,6 +897,7 @@ function restartGame() {
     bossHealth = 0;
     bossDestroyed = false;
     bossPattern = 0;
+    bossStartTime = Date.now();
        
     // 8. 뱀 패턴 상태 초기화
     isSnakePatternActive = false;
@@ -2299,51 +2300,8 @@ function checkEnemyCollisions(enemy) {
                     console.log('오디오 재생 실패:', error);
                 });
                 
-                // 피격 시간이 전체 출현 시간의 50%를 넘으면 파괴
-                const totalTime = currentTime - enemy.lastUpdateTime;
-                const hitTimeThreshold = BOSS_SETTINGS.SPAWN_INTERVAL * 0.5;
-                
-                if (enemy.totalHitTime >= hitTimeThreshold) {
-                    console.log('보스 파괴됨 - 피격 시간 초과:', {
-                        totalHitTime: enemy.totalHitTime,
-                        threshold: hitTimeThreshold
-                    });
-                    enemy.health = 0;
-                    bossHealth = 0;
-                    bossDestroyed = true;
-                    updateScore(BOSS_SETTINGS.BONUS_SCORE);
-                    
-                    // 보스 파괴 시 목숨 1개 추가 (이미 특수 무기로 파괴된 경우는 제외)
-                    if (!bullet.isSpecial) {
-                        maxLives++; // 최대 목숨 증가
-                    }
-                    
-                    // 큰 폭발 효과
-                    explosions.push(new Explosion(
-                        enemy.x + enemy.width/2,
-                        enemy.y + enemy.height/2,
-                        true
-                    ));
-                    
-                    // 추가 폭발 효과
-                    for (let i = 0; i < 8; i++) {
-                        const angle = (Math.PI * 2 / 8) * i;
-                        const distance = 50;
-                        explosions.push(new Explosion(
-                            enemy.x + enemy.width/2 + Math.cos(angle) * distance,
-                            enemy.y + enemy.height/2 + Math.sin(angle) * distance,
-                            false
-                        ));
-                    }
-                    
-                    // 보스 파괴 시 폭발음 재생
-                    applyGlobalVolume();
-                    explosionSound.currentTime = 0;
-                    explosionSound.play().catch(error => {
-                        console.log('오디오 재생 실패:', error);
-                    });
-                    
-                    bossActive = false;
+                // 보스가 화면 밖으로 이동 중이면 충돌 처리하지 않음
+                if (enemy.isLeaving) {
                     return false;
                 }
                 
@@ -3400,6 +3358,7 @@ const BOSS_SETTINGS = {
     BULLET_SPEED: 5,    // 보스 총알 속도
     PATTERN_INTERVAL: 2000, // 패턴 변경 간격
     SPAWN_INTERVAL: 30000,  // 보스 출현 간격 (30초)
+    TIME_LIMIT: 15000,  // 보스 시간 제한 (15초)
     BONUS_SCORE: 500,    // 보스 처치 보너스 점수를 500으로 설정
     PHASE_THRESHOLDS: [  // 페이즈 전환 체력 임계값
         { health: 2250, speed: 2.5, bulletSpeed: 6 },
@@ -3410,6 +3369,7 @@ const BOSS_SETTINGS = {
 
 // 게임 상태 변수에 추가
 let lastBossSpawnTime = Date.now();  // 마지막 보스 출현 시간을 현재 시간으로 초기화
+let bossStartTime = Date.now();  // 보스 시작 시간
 
 // 보스 생성 함수 수정
 function createBoss() {
@@ -3447,6 +3407,7 @@ function createBoss() {
     bossHealth = BOSS_SETTINGS.HEALTH;
     bossPattern = 0;
     bossTimer = currentTime;
+    bossStartTime = currentTime;  // 보스 시작 시간 기록
     lastBossSpawnTime = currentTime;
     bossDestroyed = false;  // 보스 파괴 상태 초기화
     
@@ -3524,6 +3485,51 @@ function createBoss() {
 // 보스 패턴 처리 함수 수정
 function handleBossPattern(boss) {
     const currentTime = Date.now();
+    
+    // 보스 시간 제한 체크 (15초)
+    const bossElapsedTime = currentTime - bossStartTime;
+    if (bossElapsedTime >= BOSS_SETTINGS.TIME_LIMIT && !bossDestroyed) {
+        console.log('보스 시간 초과 - 화면 밖으로 이동:', {
+            elapsedTime: bossElapsedTime,
+            timeLimit: BOSS_SETTINGS.TIME_LIMIT
+        });
+        
+        // 보스를 화면 밖으로 이동
+        boss.isLeaving = true;
+        boss.leaveDirection = Math.random() < 0.5 ? -1 : 1; // 왼쪽 또는 오른쪽으로 이동
+        boss.leaveSpeed = 5; // 빠른 속도로 이동
+        
+        // 보스 상태 초기화
+        bossActive = false;
+        bossHealth = 0;
+        bossDestroyed = true;
+        
+        // 보스 경고 시스템 초기화
+        bossWarning.active = false;
+        bossWarning.pattern = '';
+        bossWarning.message = '';
+        bossWarning.timer = 0;
+        bossWarning.patternDetails = '';
+        
+        return;
+    }
+    
+    // 보스가 화면 밖으로 이동 중인 경우
+    if (boss.isLeaving) {
+        boss.x += boss.leaveDirection * boss.leaveSpeed;
+        
+        // 화면 밖으로 완전히 나갔는지 확인
+        if (boss.x < -boss.width || boss.x > canvas.width) {
+            console.log('보스가 화면 밖으로 완전히 이동됨');
+            // 보스를 enemies 배열에서 제거
+            const bossIndex = enemies.findIndex(enemy => enemy.isBoss);
+            if (bossIndex !== -1) {
+                enemies.splice(bossIndex, 1);
+            }
+            return;
+        }
+        return;
+    }
     
     // 보스 체력이 0 이하이면 파괴 처리
     if (boss.health <= 0 && !bossDestroyed) {
