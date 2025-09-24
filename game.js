@@ -141,13 +141,13 @@ let flashDuration = 500;  // 깜박임 지속 시간
 let gameOverStartTime = null;  // 게임 오버 시작 시간
 let isSnakePatternActive = false;  // 뱀 패턴 활성화 상태
 let snakePatternTimer = 0;  // 뱀 패턴 타이머
-let snakePatternDuration = 10000;  // 뱀 패턴 지속 시간 (10초)
+let snakePatternDuration = 12000;  // 뱀 패턴 지속 시간 (12초)
 let snakeEnemies = [];  // 뱀 패턴의 적군 배열
 let snakePatternInterval = 0;  // 뱀 패턴 생성 간격
 let snakeGroups = [];  // 뱀 패턴 그룹 배열
 let lastSnakeGroupTime = 0;  // 마지막 뱀 그룹 생성 시간
-const snakeGroupInterval = 5000;  // 그룹 생성 간격 (5초)
-const maxSnakeGroups = 3;  // 최대 동시 그룹 수
+const snakeGroupInterval = 3000;  // 그룹 생성 간격 (3초)
+const maxSnakeGroups = 4;  // 최대 동시 그룹 수
 let gameVersion = '1.0.0-202506161826';  // 게임 버전
 
 // 게임 상태 변수에 추가
