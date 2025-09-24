@@ -3335,18 +3335,18 @@ function handleBullets() {
 
 // 보스 관련 상수 추가
 const BOSS_SETTINGS = {
-    HEALTH: 3000,        // 기본 체력 (30발 피격으로 파괴)
+    HEALTH: 4000,        // 기본 체력 (40발 피격으로 파괴)
     DAMAGE: 50,          // 보스 총알 데미지
     SPEED: 2,           // 보스 이동 속도
     BULLET_SPEED: 5,    // 보스 총알 속도
     PATTERN_INTERVAL: 2000, // 패턴 변경 간격
     SPAWN_INTERVAL: 30000,  // 보스 출현 간격 (30초)
-    TIME_LIMIT: 15000,  // 보스 시간 제한 (15초)
+    TIME_LIMIT: 25000,  // 보스 시간 제한 (25초)
     BONUS_SCORE: 500,    // 보스 처치 보너스 점수를 500으로 설정
     PHASE_THRESHOLDS: [  // 페이즈 전환 체력 임계값
-        { health: 2250, speed: 2.5, bulletSpeed: 6 },
-        { health: 1500, speed: 3, bulletSpeed: 7 },
-        { health: 750, speed: 3.5, bulletSpeed: 8 }
+        { health: 3000, speed: 2.5, bulletSpeed: 6 },
+        { health: 2000, speed: 3, bulletSpeed: 7 },
+        { health: 1000, speed: 3.5, bulletSpeed: 8 }
     ]
 };
 
@@ -3568,30 +3568,50 @@ function handleBossPattern(boss) {
         return;
     }
 
-    // 보스 이동 패턴
-    const movePattern = Math.floor(currentTime / 5000) % 4;  // 5초마다 이동 패턴 변경
+    // 보스 이동 패턴 (25초 동안 더 역동적인 이동)
+    const movePattern = Math.floor(currentTime / 3000) % 6;  // 3초마다 이동 패턴 변경
+    
+    // 화면 경계 체크를 위한 변수
+    const minX = 0;
+    const maxX = canvas.width - boss.width;
+    const minY = 20;
+    const maxY = 200;
     
     switch (movePattern) {
-        case 0:  // 좌우 이동
-            boss.x += Math.sin(currentTime / 500) * 3;  // 부드러운 좌우 이동
+        case 0:  // 좌우 자유 이동 (개선)
+            boss.x += Math.sin(currentTime / 400) * 4;  // 더 빠른 좌우 이동
+            boss.y = 60 + Math.sin(currentTime / 800) * 30;  // 상하 미세 조정
             break;
-        case 1:  // 원형 이동
-            const radius = 100;
+        case 1:  // 대각선 이동
+            boss.x += Math.sin(currentTime / 600) * 3;
+            boss.y += Math.cos(currentTime / 600) * 2;
+            break;
+        case 2:  // 원형 이동 (개선)
+            const radius = 120;
             const centerX = canvas.width / 2;
             const centerY = 100;
-            boss.x = centerX + Math.cos(currentTime / 1000) * radius;
-            boss.y = centerY + Math.sin(currentTime / 1000) * radius;
+            boss.x = centerX + Math.cos(currentTime / 1200) * radius;
+            boss.y = centerY + Math.sin(currentTime / 1200) * radius;
             break;
-        case 2:  // 지그재그 이동
-            boss.x += Math.sin(currentTime / 300) * 4;
-            boss.y = 60 + Math.abs(Math.sin(currentTime / 500)) * 40;
+        case 3:  // 지그재그 이동 (개선)
+            boss.x += Math.sin(currentTime / 250) * 5;
+            boss.y = 60 + Math.abs(Math.sin(currentTime / 400)) * 50;
             break;
-        case 3:  // 추적 이동
+        case 4:  // 추적 이동 (개선)
             const targetX = player.x;
             const dx = targetX - boss.x;
-            boss.x += dx * 0.02;  // 부드러운 추적
+            boss.x += dx * 0.03;  // 더 빠른 추적
+            boss.y = 60 + Math.sin(currentTime / 600) * 20;
+            break;
+        case 5:  // 랜덤 이동
+            boss.x += (Math.random() - 0.5) * 6;
+            boss.y += (Math.random() - 0.5) * 3;
             break;
     }
+    
+    // 화면 경계 제한
+    boss.x = Math.max(minX, Math.min(maxX, boss.x));
+    boss.y = Math.max(minY, Math.min(maxY, boss.y));
     
     // 패턴 단계별 패턴 선택
     let patterns = [];
