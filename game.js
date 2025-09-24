@@ -149,6 +149,7 @@ let lastSnakeGroupTime = 0;  // 마지막 뱀 그룹 생성 시간
 const snakeGroupInterval = 3000;  // 그룹 생성 간격 (3초)
 const maxSnakeGroups = 4;  // 최대 동시 그룹 수
 let gameVersion = '1.0.0-202506161826';  // 게임 버전
+let gameStartTime = Date.now();  // 게임 시작 시간
 
 // 게임 상태 변수에 추가
 let isStartScreen = true;  // 시작 화면 상태
@@ -899,6 +900,9 @@ function restartGame() {
     specialWeaponCharged = false;
     specialWeaponCharge = 0;
     specialWeaponStock = 0;  // 특수무기 보유 개수 초기화
+    
+    // 7. 게임 시작 시간 초기화
+    gameStartTime = Date.now();
     specialWeaponAccumulatedPoints = 0;  // 특수무기 누적 점수 초기화
     
     // 7. 보스 관련 상태 완전 초기화
@@ -1916,6 +1920,11 @@ function handleEnemies() {
     // 뱀 패턴 처리
     if (isSnakePatternActive) {
         handleSnakePattern();
+    } else {
+        // 게임 시작 후 5초가 지나면 뱀패턴 자동 시작 (레벨 1에서도 빠른 등장)
+        if (currentTime - gameStartTime >= 5000 && snakeGroups.length === 0) {
+            startSnakePattern();
+        }
     }
 
     // 일반 적 생성 - 시간 기반 생성 로직으로 변경
