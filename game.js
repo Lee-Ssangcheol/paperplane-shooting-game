@@ -128,7 +128,7 @@ let enemyMissiles = [];   // 적 미사일 배열
 let shieldedEnemies = []; // 방어막 적 배열
 let gameLevel = 1;        // 게임 레벨
 let levelScore = 0;       // 레벨 점수
-let levelUpScore = 1000;  // 레벨업에 필요한 점수
+let levelUpScore = 3000;  // 레벨업에 필요한 점수
 let score = 0;           // 현재 점수
 let highScore = 0;       // 최고 점수 (초기값 0으로 설정)
 let hasSecondPlane = false;  // 두 번째 비행기 보유 여부
@@ -893,7 +893,7 @@ function restartGame() {
     score = 0;
     levelScore = 0;
     gameLevel = 1;
-    levelUpScore = 1000;
+    levelUpScore = 3000;
     
     // 6. 특수무기 관련 상태 초기화
     specialWeaponCharged = false;
@@ -4215,7 +4215,7 @@ function checkLevelUp() {
     if (levelScore >= levelUpScore) {
         gameLevel++;
         levelScore = 0;
-        levelUpScore = 1000 * gameLevel; // 레벨이 올라갈수록 다음 레벨까지 필요한 점수 증가
+        levelUpScore = 3000 * gameLevel; // 레벨이 올라갈수록 다음 레벨까지 필요한 점수 증가
         
         // 현재 난이도 설정 가져오기
         const currentDifficulty = difficultySettings[Math.min(gameLevel, 5)] || {
