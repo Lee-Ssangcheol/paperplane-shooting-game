@@ -1809,16 +1809,30 @@ function gameLoop() {
         // 보스 체크 및 생성
         const currentTime = Date.now();
         if (!bossActive) {  // bossDestroyed 조건 제거
-            const timeSinceLastBoss = currentTime - lastBossSpawnTime;
-            
-            if (timeSinceLastBoss >= BOSS_SETTINGS.SPAWN_INTERVAL) {
-                console.log('보스 생성 조건 만족:', {
-                    currentTime,
-                    lastBossSpawnTime,
-                    timeSinceLastBoss,
-                    interval: BOSS_SETTINGS.SPAWN_INTERVAL
-                });
-                createBoss();
+            // 레벨1에서 200점 달성 시 보스 등장 (시간 간격도 체크)
+            if (gameLevel === 1 && score >= 200) {
+                const timeSinceLastBoss = currentTime - lastBossSpawnTime;
+                if (timeSinceLastBoss >= BOSS_SETTINGS.SPAWN_INTERVAL) {
+                    console.log('레벨1 보스 생성 조건 만족:', {
+                        score,
+                        gameLevel,
+                        timeSinceLastBoss
+                    });
+                    createBoss();
+                }
+            }
+            // 다른 레벨에서는 기존 시간 기반 등장
+            else if (gameLevel > 1) {
+                const timeSinceLastBoss = currentTime - lastBossSpawnTime;
+                if (timeSinceLastBoss >= BOSS_SETTINGS.SPAWN_INTERVAL) {
+                    console.log('보스 생성 조건 만족:', {
+                        currentTime,
+                        lastBossSpawnTime,
+                        timeSinceLastBoss,
+                        interval: BOSS_SETTINGS.SPAWN_INTERVAL
+                    });
+                    createBoss();
+                }
             }
         } else {
             // 보스가 존재하는 경우 보스 패턴 처리
@@ -2263,6 +2277,7 @@ function checkEnemyCollisions(enemy) {
                     enemy.health = 0;
                     bossHealth = 0;
                     bossDestroyed = true;
+                    lastBossSpawnTime = currentTime; // 보스 파괴 시 시간 기록
                     updateScore(BOSS_SETTINGS.BONUS_SCORE);
                     
                     // 보스 파괴 시 목숨 1개 추가
@@ -3349,8 +3364,8 @@ const BOSS_SETTINGS = {
     SPEED: 2,           // 보스 이동 속도
     BULLET_SPEED: 5,    // 보스 총알 속도
     PATTERN_INTERVAL: 2000, // 패턴 변경 간격
-    SPAWN_INTERVAL: 30000,  // 보스 출현 간격 (30초)
-    TIME_LIMIT: 25000,  // 보스 시간 제한 (25초)
+    SPAWN_INTERVAL: 10000,  // 보스 출현 간격 (10초)
+    TIME_LIMIT: 15000,  // 보스 시간 제한 (15초)
     BONUS_SCORE: 500,    // 보스 처치 보너스 점수를 500으로 설정
     PHASE_THRESHOLDS: [  // 페이즈 전환 체력 임계값
         { health: 3000, speed: 2.5, bulletSpeed: 6 },
@@ -3377,7 +3392,7 @@ function createBoss() {
     const timeSinceLastBoss = currentTime - lastBossSpawnTime;
     
    
-    // 시간 체크
+    // 시간 체크 (모든 레벨에서 시간 간격 체크)
     if (timeSinceLastBoss < BOSS_SETTINGS.SPAWN_INTERVAL) {
         console.log('보스 생성 시간이 되지 않음:', {
             timeSinceLastBoss,
@@ -3478,56 +3493,28 @@ function createBoss() {
 function handleBossPattern(boss) {
     const currentTime = Date.now();
     
-    // 보스 시간 제한 체크 (15초)
+    // 보스 시간 제한 체크 (15초) - 화면 밖으로 나가지 않고 계속 화면 내에서 활동
     const bossElapsedTime = currentTime - bossStartTime;
     if (bossElapsedTime >= BOSS_SETTINGS.TIME_LIMIT && !bossDestroyed) {
-        console.log('보스 시간 초과 - 화면 밖으로 이동:', {
+        console.log('보스 시간 초과 - 화면 내에서 계속 활동:', {
             elapsedTime: bossElapsedTime,
             timeLimit: BOSS_SETTINGS.TIME_LIMIT
         });
         
-        // 보스를 화면 밖으로 이동
-        boss.isLeaving = true;
-        boss.leaveDirection = Math.random() < 0.5 ? -1 : 1; // 왼쪽 또는 오른쪽으로 이동
-        boss.leaveSpeed = 5; // 빠른 속도로 이동
-        
-        // 보스 상태 초기화
-        bossActive = false;
-        bossHealth = 0;
-        bossDestroyed = true;
-        
-        // 보스 경고 시스템 초기화
-        bossWarning.active = false;
-        bossWarning.pattern = '';
-        bossWarning.message = '';
-        bossWarning.timer = 0;
-        bossWarning.patternDetails = '';
-        
-        return;
+        // 보스가 파괴되지 않은 한 화면 내에서 계속 활동
+        // 시간 초과 시에도 보스는 계속 화면 내에서 움직임
+        // 보스는 플레이어의 공격으로만 파괴됨
     }
     
-    // 보스가 화면 밖으로 이동 중인 경우
-    if (boss.isLeaving) {
-        boss.x += boss.leaveDirection * boss.leaveSpeed;
-        
-        // 화면 밖으로 완전히 나갔는지 확인
-        if (boss.x < -boss.width || boss.x > canvas.width) {
-            console.log('보스가 화면 밖으로 완전히 이동됨');
-            // 보스를 enemies 배열에서 제거
-            const bossIndex = enemies.findIndex(enemy => enemy.isBoss);
-            if (bossIndex !== -1) {
-                enemies.splice(bossIndex, 1);
-            }
-            return;
-        }
-        return;
-    }
+    // 보스는 파괴되지 않은 한 화면 밖으로 나가지 않음
+    // 화면 밖으로 나가는 로직 제거
     
     // 보스 체력이 0 이하이면 파괴 처리
     if (boss.health <= 0 && !bossDestroyed) {
         bossDestroyed = true;
         bossActive = false;
         bossHealth = 0;
+        lastBossSpawnTime = currentTime; // 보스 파괴 시 시간 기록
         updateScore(BOSS_SETTINGS.BONUS_SCORE);
         
         // 레벨 1~5에서 패턴 사용 기록
@@ -3577,48 +3564,23 @@ function handleBossPattern(boss) {
         return;
     }
 
-    // 보스 이동 패턴 (25초 동안 더 역동적인 이동)
-    const movePattern = Math.floor(currentTime / 3000) % 6;  // 3초마다 이동 패턴 변경
-    
+    // 보스 이동 패턴 (15초 동안 좌우 왕복 이동)
     // 화면 경계 체크를 위한 변수
     const minX = 0;
     const maxX = canvas.width - boss.width;
     const minY = 20;
     const maxY = 200;
     
-    switch (movePattern) {
-        case 0:  // 좌우 자유 이동 (개선)
-            boss.x += Math.sin(currentTime / 400) * 4;  // 더 빠른 좌우 이동
-            boss.y = 60 + Math.sin(currentTime / 800) * 30;  // 상하 미세 조정
-            break;
-        case 1:  // 대각선 이동
-            boss.x += Math.sin(currentTime / 600) * 3;
-            boss.y += Math.cos(currentTime / 600) * 2;
-            break;
-        case 2:  // 원형 이동 (개선)
-            const radius = 120;
-            const centerX = canvas.width / 2;
-            const centerY = 100;
-            boss.x = centerX + Math.cos(currentTime / 1200) * radius;
-            boss.y = centerY + Math.sin(currentTime / 1200) * radius;
-            break;
-        case 3:  // 지그재그 이동 (개선)
-            boss.x += Math.sin(currentTime / 250) * 5;
-            boss.y = 60 + Math.abs(Math.sin(currentTime / 400)) * 50;
-            break;
-        case 4:  // 추적 이동 (개선)
-            const targetX = player.x;
-            const dx = targetX - boss.x;
-            boss.x += dx * 0.03;  // 더 빠른 추적
-            boss.y = 60 + Math.sin(currentTime / 600) * 20;
-            break;
-        case 5:  // 랜덤 이동
-            boss.x += (Math.random() - 0.5) * 6;
-            boss.y += (Math.random() - 0.5) * 3;
-            break;
-    }
+    // 좌우 왕복 이동 패턴
+    const moveSpeed = 3; // 이동 속도
+    const amplitude = (canvas.width - boss.width) / 2; // 왕복 범위
+    const centerX = canvas.width / 2; // 화면 중앙
     
-    // 화면 경계 제한
+    // 시간에 따른 좌우 왕복 이동
+    boss.x = centerX + Math.sin(currentTime / 2000) * amplitude; // 2초 주기로 좌우 왕복
+    boss.y = 60 + Math.sin(currentTime / 3000) * 20; // 상하 미세 조정
+    
+    // 화면 경계 제한 (안전장치)
     boss.x = Math.max(minX, Math.min(maxX, boss.x));
     boss.y = Math.max(minY, Math.min(maxY, boss.y));
     
