@@ -1843,7 +1843,7 @@ function gameLoop() {
                 // 보스가 enemies 배열에서 제거된 경우 상태 초기화
                 bossActive = false;
                 bossHealth = 0;
-                bossDestroyed = false;  // 보스 파괴 상태 초기화
+                // bossDestroyed는 초기화하지 않음 (보스 파괴 상태 유지)
                 console.log('보스가 제거되어 상태 초기화');
             }
         }
@@ -4222,9 +4222,9 @@ function checkLevelUp() {
             dynamiteDropChance: 0.25
         };
         
-        // 보스 설정 업데이트
+        // 보스 설정 업데이트 (등장 간격은 고정 유지)
         BOSS_SETTINGS.HEALTH = currentDifficulty.bossHealth;
-        BOSS_SETTINGS.SPAWN_INTERVAL = currentDifficulty.bossSpawnInterval;
+        // BOSS_SETTINGS.SPAWN_INTERVAL = currentDifficulty.bossSpawnInterval; // 등장 간격 변경 방지
         
         // 레벨업 메시지 표시
         ctx.fillStyle = 'yellow';
