@@ -221,7 +221,7 @@ const difficultySettings = {
         patternChance: 0.2,
         maxEnemies: 5,
         bossHealth: 800,
-        bossSpawnInterval: 60000, // 1분
+        bossSpawnInterval: 10000, // 10초
         powerUpChance: 0.1,
         bombDropChance: 0.1,
         dynamiteDropChance: 0.05
@@ -233,7 +233,7 @@ const difficultySettings = {
         patternChance: 0.4,
         maxEnemies: 8,
         bossHealth: 1000,
-        bossSpawnInterval: 45000, // 45초
+        bossSpawnInterval: 10000, // 10초
         powerUpChance: 0.15,
         bombDropChance: 0.15,
         dynamiteDropChance: 0.1
@@ -245,7 +245,7 @@ const difficultySettings = {
         patternChance: 0.6,
         maxEnemies: 12,
         bossHealth: 1200,
-        bossSpawnInterval: 30000, // 30초
+        bossSpawnInterval: 10000, // 10초
         powerUpChance: 0.2,
         bombDropChance: 0.2,
         dynamiteDropChance: 0.15
@@ -257,7 +257,7 @@ const difficultySettings = {
         patternChance: 0.8,
         maxEnemies: 15,
         bossHealth: 1500,
-        bossSpawnInterval: 25000, // 25초
+        bossSpawnInterval: 10000, // 10초
         powerUpChance: 0.25,
         bombDropChance: 0.25,
         dynamiteDropChance: 0.2
@@ -269,7 +269,7 @@ const difficultySettings = {
         patternChance: 1.0,
         maxEnemies: 20,
         bossHealth: 2000,
-        bossSpawnInterval: 20000, // 20초
+        bossSpawnInterval: 10000, // 10초
         powerUpChance: 0.3,
         bombDropChance: 0.3,
         dynamiteDropChance: 0.25
@@ -766,7 +766,7 @@ async function initializeGame() {
         bossHealth = 0;
         bossDestroyed = false;  // 보스 파괴 상태 초기화
         bossPattern = 0;
-        lastBossSpawnTime = Date.now();
+        lastBossSpawnTime = Date.now();  // 보스 등장을 10초 후로 설정
                
         // 6. 플레이어 초기 위치 설정
         player.x = canvas.width / 2;
@@ -888,7 +888,7 @@ function restartGame() {
     flashTimer = 0;
     lastEnemySpawnTime = 0;
     lastShieldedEnemySpawnTime = 0;
-    lastBossSpawnTime = Date.now();
+    lastBossSpawnTime = Date.now();  // 보스 등장을 10초 후로 설정
     
     // 5. 점수 및 레벨 초기화
     score = 0;
@@ -911,6 +911,11 @@ function restartGame() {
     bossDestroyed = false;
     bossPattern = 0;
     bossStartTime = Date.now();
+    
+    // 8. 보스 설정 즉시 적용 (게임 재시작 시)
+    const restartDifficulty = DIFFICULTY_SETTINGS[gameLevel] || DIFFICULTY_SETTINGS[5];
+    BOSS_SETTINGS.HEALTH = restartDifficulty.bossHealth;
+    BOSS_SETTINGS.SPAWN_INTERVAL = restartDifficulty.bossSpawnInterval;
        
     // 8. 뱀 패턴 상태 초기화
     isSnakePatternActive = false;
@@ -946,6 +951,11 @@ function restartGame() {
     // 12. 게임 화면 상태 초기화
     isStartScreen = false;
     isPaused = false;
+    
+    // 13. 보스 설정 즉시 적용 (게임 시작 시)
+    const startDifficulty = DIFFICULTY_SETTINGS[gameLevel] || DIFFICULTY_SETTINGS[5];
+    BOSS_SETTINGS.HEALTH = startDifficulty.bossHealth;
+    BOSS_SETTINGS.SPAWN_INTERVAL = startDifficulty.bossSpawnInterval;
     
     // 13. 사운드 관련 상태 초기화
     lastCollisionTime = 0;
@@ -984,7 +994,7 @@ function createEnemy() {
         patternChance: 1.0,
         maxEnemies: 20 + (gameLevel - 5) * 2,
         bossHealth: 2000 + (gameLevel - 5) * 500,
-        bossSpawnInterval: Math.max(10000, 20000 - (gameLevel - 5) * 1000),
+        bossSpawnInterval: 10000, // 10초로 고정
         powerUpChance: 0.3,
         bombDropChance: 0.3,
         dynamiteDropChance: 0.25
@@ -1809,30 +1819,16 @@ function gameLoop() {
         // 보스 체크 및 생성
         const currentTime = Date.now();
         if (!bossActive) {  // bossDestroyed 조건 제거
-            // 레벨1에서 200점 달성 시 보스 등장 (시간 간격도 체크)
-            if (gameLevel === 1 && score >= 200) {
-                const timeSinceLastBoss = currentTime - lastBossSpawnTime;
-                if (timeSinceLastBoss >= BOSS_SETTINGS.SPAWN_INTERVAL) {
-                    console.log('레벨1 보스 생성 조건 만족:', {
-                        score,
-                        gameLevel,
-                        timeSinceLastBoss
-                    });
-                    createBoss();
-                }
-            }
-            // 다른 레벨에서는 기존 시간 기반 등장
-            else if (gameLevel > 1) {
-                const timeSinceLastBoss = currentTime - lastBossSpawnTime;
-                if (timeSinceLastBoss >= BOSS_SETTINGS.SPAWN_INTERVAL) {
-                    console.log('보스 생성 조건 만족:', {
-                        currentTime,
-                        lastBossSpawnTime,
-                        timeSinceLastBoss,
-                        interval: BOSS_SETTINGS.SPAWN_INTERVAL
-                    });
-                    createBoss();
-                }
+            const timeSinceLastBoss = currentTime - lastBossSpawnTime;
+            
+            if (timeSinceLastBoss >= BOSS_SETTINGS.SPAWN_INTERVAL) {
+                console.log('보스 생성 조건 만족:', {
+                    currentTime,
+                    lastBossSpawnTime,
+                    timeSinceLastBoss,
+                    interval: BOSS_SETTINGS.SPAWN_INTERVAL
+                });
+                createBoss();
             }
         } else {
             // 보스가 존재하는 경우 보스 패턴 처리
@@ -1843,7 +1839,7 @@ function gameLoop() {
                 // 보스가 enemies 배열에서 제거된 경우 상태 초기화
                 bossActive = false;
                 bossHealth = 0;
-                // bossDestroyed는 초기화하지 않음 (보스 파괴 상태 유지)
+                bossDestroyed = false;  // 보스 파괴 상태 초기화
                 console.log('보스가 제거되어 상태 초기화');
             }
         }
@@ -1925,7 +1921,7 @@ function handleEnemies() {
         patternChance: 1.0,
         maxEnemies: 20 + (gameLevel - 5) * 2,
         bossHealth: 2000 + (gameLevel - 5) * 500,
-        bossSpawnInterval: Math.max(10000, 20000 - (gameLevel - 5) * 1000),
+        bossSpawnInterval: 10000, // 10초로 고정
         powerUpChance: 0.3,
         bombDropChance: 0.3,
         dynamiteDropChance: 0.25
@@ -2277,7 +2273,6 @@ function checkEnemyCollisions(enemy) {
                     enemy.health = 0;
                     bossHealth = 0;
                     bossDestroyed = true;
-                    lastBossSpawnTime = currentTime; // 보스 파괴 시 시간 기록
                     updateScore(BOSS_SETTINGS.BONUS_SCORE);
                     
                     // 보스 파괴 시 목숨 1개 추가
@@ -2624,7 +2619,7 @@ function drawUI() {
         patternChance: 1.0,
         maxEnemies: 20 + (gameLevel - 5) * 2,
         bossHealth: 2000 + (gameLevel - 5) * 500,
-        bossSpawnInterval: Math.max(10000, 20000 - (gameLevel - 5) * 1000),
+        bossSpawnInterval: 10000, // 10초로 고정
         powerUpChance: 0.3,
         bombDropChance: 0.3,
         dynamiteDropChance: 0.25
@@ -2931,6 +2926,10 @@ document.addEventListener('keydown', (e) => {
                 restartGame();
             } else {
                 isStartScreen = false;
+                // 보스 설정 즉시 적용
+                const spaceDifficulty = DIFFICULTY_SETTINGS[gameLevel] || DIFFICULTY_SETTINGS[5];
+                BOSS_SETTINGS.HEALTH = spaceDifficulty.bossHealth;
+                BOSS_SETTINGS.SPAWN_INTERVAL = spaceDifficulty.bossSpawnInterval;
             }
             return;
         }
@@ -2976,6 +2975,10 @@ document.addEventListener('keydown', (e) => {
     // 시작 화면에서 Enter를 누르면 게임 시작
     if (isStartScreen && e.code === 'Enter') {
         isStartScreen = false;
+        // 보스 설정 즉시 적용
+        const enterDifficulty = DIFFICULTY_SETTINGS[gameLevel] || DIFFICULTY_SETTINGS[5];
+        BOSS_SETTINGS.HEALTH = enterDifficulty.bossHealth;
+        BOSS_SETTINGS.SPAWN_INTERVAL = enterDifficulty.bossSpawnInterval;
         return;
     }
 });
@@ -3364,8 +3367,8 @@ const BOSS_SETTINGS = {
     SPEED: 2,           // 보스 이동 속도
     BULLET_SPEED: 5,    // 보스 총알 속도
     PATTERN_INTERVAL: 2000, // 패턴 변경 간격
-    SPAWN_INTERVAL: 10000,  // 보스 출현 간격 (10초)
-    TIME_LIMIT: 15000,  // 보스 시간 제한 (15초)
+    SPAWN_INTERVAL: 30000,  // 보스 출현 간격 (30초)
+    TIME_LIMIT: 25000,  // 보스 시간 제한 (25초)
     BONUS_SCORE: 500,    // 보스 처치 보너스 점수를 500으로 설정
     PHASE_THRESHOLDS: [  // 페이즈 전환 체력 임계값
         { health: 3000, speed: 2.5, bulletSpeed: 6 },
@@ -3375,7 +3378,7 @@ const BOSS_SETTINGS = {
 };
 
 // 게임 상태 변수에 추가
-let lastBossSpawnTime = Date.now();  // 마지막 보스 출현 시간을 현재 시간으로 초기화
+let lastBossSpawnTime = Date.now() - 0;  // 마지막 보스 출현 시간을 현재 시간으로 설정하여 10초 후 첫 등장
 let bossStartTime = Date.now();  // 보스 시작 시간
 
 // 보스 생성 함수 수정
@@ -3392,7 +3395,7 @@ function createBoss() {
     const timeSinceLastBoss = currentTime - lastBossSpawnTime;
     
    
-    // 시간 체크 (모든 레벨에서 시간 간격 체크)
+    // 시간 체크
     if (timeSinceLastBoss < BOSS_SETTINGS.SPAWN_INTERVAL) {
         console.log('보스 생성 시간이 되지 않음:', {
             timeSinceLastBoss,
@@ -3493,28 +3496,56 @@ function createBoss() {
 function handleBossPattern(boss) {
     const currentTime = Date.now();
     
-    // 보스 시간 제한 체크 (15초) - 화면 밖으로 나가지 않고 계속 화면 내에서 활동
+    // 보스 시간 제한 체크 (15초)
     const bossElapsedTime = currentTime - bossStartTime;
     if (bossElapsedTime >= BOSS_SETTINGS.TIME_LIMIT && !bossDestroyed) {
-        console.log('보스 시간 초과 - 화면 내에서 계속 활동:', {
+        console.log('보스 시간 초과 - 화면 밖으로 이동:', {
             elapsedTime: bossElapsedTime,
             timeLimit: BOSS_SETTINGS.TIME_LIMIT
         });
         
-        // 보스가 파괴되지 않은 한 화면 내에서 계속 활동
-        // 시간 초과 시에도 보스는 계속 화면 내에서 움직임
-        // 보스는 플레이어의 공격으로만 파괴됨
+        // 보스를 화면 밖으로 이동
+        boss.isLeaving = true;
+        boss.leaveDirection = Math.random() < 0.5 ? -1 : 1; // 왼쪽 또는 오른쪽으로 이동
+        boss.leaveSpeed = 5; // 빠른 속도로 이동
+        
+        // 보스 상태 초기화
+        bossActive = false;
+        bossHealth = 0;
+        bossDestroyed = true;
+        
+        // 보스 경고 시스템 초기화
+        bossWarning.active = false;
+        bossWarning.pattern = '';
+        bossWarning.message = '';
+        bossWarning.timer = 0;
+        bossWarning.patternDetails = '';
+        
+        return;
     }
     
-    // 보스는 파괴되지 않은 한 화면 밖으로 나가지 않음
-    // 화면 밖으로 나가는 로직 제거
+    // 보스가 화면 밖으로 이동 중인 경우
+    if (boss.isLeaving) {
+        boss.x += boss.leaveDirection * boss.leaveSpeed;
+        
+        // 화면 밖으로 완전히 나갔는지 확인
+        if (boss.x < -boss.width || boss.x > canvas.width) {
+            console.log('보스가 화면 밖으로 완전히 이동됨');
+            // 보스를 enemies 배열에서 제거
+            const bossIndex = enemies.findIndex(enemy => enemy.isBoss);
+            if (bossIndex !== -1) {
+                enemies.splice(bossIndex, 1);
+            }
+            return;
+        }
+        return;
+    }
     
     // 보스 체력이 0 이하이면 파괴 처리
     if (boss.health <= 0 && !bossDestroyed) {
         bossDestroyed = true;
         bossActive = false;
         bossHealth = 0;
-        lastBossSpawnTime = currentTime; // 보스 파괴 시 시간 기록
         updateScore(BOSS_SETTINGS.BONUS_SCORE);
         
         // 레벨 1~5에서 패턴 사용 기록
@@ -3564,23 +3595,48 @@ function handleBossPattern(boss) {
         return;
     }
 
-    // 보스 이동 패턴 (15초 동안 좌우 왕복 이동)
+    // 보스 이동 패턴 (25초 동안 더 역동적인 이동)
+    const movePattern = Math.floor(currentTime / 3000) % 6;  // 3초마다 이동 패턴 변경
+    
     // 화면 경계 체크를 위한 변수
     const minX = 0;
     const maxX = canvas.width - boss.width;
     const minY = 20;
     const maxY = 200;
     
-    // 좌우 왕복 이동 패턴
-    const moveSpeed = 3; // 이동 속도
-    const amplitude = (canvas.width - boss.width) / 2; // 왕복 범위
-    const centerX = canvas.width / 2; // 화면 중앙
+    switch (movePattern) {
+        case 0:  // 좌우 자유 이동 (개선)
+            boss.x += Math.sin(currentTime / 400) * 4;  // 더 빠른 좌우 이동
+            boss.y = 60 + Math.sin(currentTime / 800) * 30;  // 상하 미세 조정
+            break;
+        case 1:  // 대각선 이동
+            boss.x += Math.sin(currentTime / 600) * 3;
+            boss.y += Math.cos(currentTime / 600) * 2;
+            break;
+        case 2:  // 원형 이동 (개선)
+            const radius = 120;
+            const centerX = canvas.width / 2;
+            const centerY = 100;
+            boss.x = centerX + Math.cos(currentTime / 1200) * radius;
+            boss.y = centerY + Math.sin(currentTime / 1200) * radius;
+            break;
+        case 3:  // 지그재그 이동 (개선)
+            boss.x += Math.sin(currentTime / 250) * 5;
+            boss.y = 60 + Math.abs(Math.sin(currentTime / 400)) * 50;
+            break;
+        case 4:  // 추적 이동 (개선)
+            const targetX = player.x;
+            const dx = targetX - boss.x;
+            boss.x += dx * 0.03;  // 더 빠른 추적
+            boss.y = 60 + Math.sin(currentTime / 600) * 20;
+            break;
+        case 5:  // 랜덤 이동
+            boss.x += (Math.random() - 0.5) * 6;
+            boss.y += (Math.random() - 0.5) * 3;
+            break;
+    }
     
-    // 시간에 따른 좌우 왕복 이동
-    boss.x = centerX + Math.sin(currentTime / 2000) * amplitude; // 2초 주기로 좌우 왕복
-    boss.y = 60 + Math.sin(currentTime / 3000) * 20; // 상하 미세 조정
-    
-    // 화면 경계 제한 (안전장치)
+    // 화면 경계 제한
     boss.x = Math.max(minX, Math.min(maxX, boss.x));
     boss.y = Math.max(minY, Math.min(maxY, boss.y));
     
@@ -3611,58 +3667,27 @@ function handleBossPattern(boss) {
         BOSS_PATTERNS.CHAOS_SHOT
     ];
     
-    // 레벨별 패턴 시스템
-    if (gameLevel <= 5) {
-        // 레벨 1~5: 순차적 패턴 시스템
-        if (boss.singlePattern) {
-            patterns = [boss.singlePattern];
-        } else {
-            // 기본 패턴 사용
-            patterns = [BOSS_PATTERNS.BASIC];
-        }
+    // 모든 레벨에서 자유로운 랜덤 패턴 시스템 (제한사항 해제)
+    
+    // 패턴 변경 체크 (5초마다)
+    if (currentTime - boss.lastPatternChange >= 5000) {
+        // 모든 패턴에서 완전 랜덤 선택 (순환 제한 해제)
+        const selectedPattern = availablePatterns[Math.floor(Math.random() * availablePatterns.length)];
+        
+        boss.currentPatterns = [selectedPattern];
+        boss.lastPatternChange = currentTime;
+        console.log(`보스 패턴 변경 (완전 랜덤): ${selectedPattern}`);
+    }
+    
+    // 현재 패턴 사용
+    if (boss.currentPatterns && boss.currentPatterns.length > 0) {
+        patterns = boss.currentPatterns;
     } else {
-        // 레벨 6 이상: 단일 랜덤 패턴 시스템 (한 번 등장한 패턴은 모든 패턴이 등장한 후에 다시 등장)
-        
-        // 보스별 사용한 패턴 추적 시스템 초기화
-        if (!boss.usedPatterns) {
-            boss.usedPatterns = [];
-        }
-        
-        // 패턴 변경 체크 (5초마다)
-        if (currentTime - boss.lastPatternChange >= boss.patternDuration) {
-            // 사용 가능한 패턴 목록에서 아직 사용하지 않은 패턴들만 선택
-            const unusedPatterns = availablePatterns.filter(pattern => !boss.usedPatterns.includes(pattern));
-            
-            let selectedPattern;
-            
-            if (unusedPatterns.length > 0) {
-                // 아직 사용하지 않은 패턴이 있으면 그 중에서 랜덤 선택
-                selectedPattern = unusedPatterns[Math.floor(Math.random() * unusedPatterns.length)];
-                boss.usedPatterns.push(selectedPattern);
-                console.log(`보스 패턴 변경 (단일 랜덤): ${selectedPattern} (사용된 패턴: ${boss.usedPatterns.length}/${availablePatterns.length})`);
-            } else {
-                // 모든 패턴을 다 사용했으면 사용 기록 초기화하고 랜덤 선택
-                boss.usedPatterns = [];
-                selectedPattern = availablePatterns[Math.floor(Math.random() * availablePatterns.length)];
-                boss.usedPatterns.push(selectedPattern);
-                console.log(`보스 패턴 변경 (단일 랜덤): ${selectedPattern} (모든 패턴 사용 완료, 기록 초기화)`);
-            }
-            
-            boss.currentPatterns = [selectedPattern];
-            boss.lastPatternChange = currentTime;
-        }
-        
-        // 현재 패턴 사용
-        if (boss.currentPatterns.length > 0) {
-            patterns = boss.currentPatterns;
-        } else {
-            // 초기 패턴 설정
-            const initialPattern = availablePatterns[Math.floor(Math.random() * availablePatterns.length)];
-            patterns = [initialPattern];
-            boss.currentPatterns = [initialPattern];
-            boss.usedPatterns = [initialPattern];
-            console.log(`보스 초기 패턴 설정: ${initialPattern}`);
-        }
+        // 초기 패턴 설정
+        const initialPattern = availablePatterns[Math.floor(Math.random() * availablePatterns.length)];
+        patterns = [initialPattern];
+        boss.currentPatterns = [initialPattern];
+        console.log(`보스 초기 패턴 설정: ${initialPattern}`);
     }
     
     // 현재 패턴들로 공격 실행
@@ -3818,17 +3843,21 @@ function executeBossPattern(boss, pattern, currentTime) {
             
         // 새로운 확산탄 패턴들
         case BOSS_PATTERNS.HEART_SHOT:
-            if (currentTime - boss.lastShot >= 1200) {  // 1.2초마다 발사
-                // 하트 모양으로 발사 (8개 총알)
+            if (currentTime - boss.lastShot >= 5000) {  // 5초마다 발사
+                // 하트 모양으로 발사 (12개 총알로 증가)
                 const heartAngles = [
                     Math.PI / 2,           // 위
-                    Math.PI / 2 + Math.PI / 6,  // 위-오른쪽
-                    Math.PI / 2 - Math.PI / 6,  // 위-왼쪽
+                    Math.PI / 2 + Math.PI / 8,  // 위-오른쪽
+                    Math.PI / 2 - Math.PI / 8,  // 위-왼쪽
+                    Math.PI / 2 + Math.PI / 4,  // 위-오른쪽 더
+                    Math.PI / 2 - Math.PI / 4,  // 위-왼쪽 더
                     Math.PI / 3,           // 오른쪽-위
                     Math.PI - Math.PI / 3, // 왼쪽-위
                     Math.PI / 4,           // 오른쪽
                     Math.PI - Math.PI / 4, // 왼쪽
-                    Math.PI / 2 + Math.PI / 4  // 아래-오른쪽
+                    Math.PI / 2 + Math.PI / 3,  // 아래-오른쪽
+                    Math.PI / 2 - Math.PI / 3,  // 아래-왼쪽
+                    Math.PI / 2 + Math.PI / 6   // 아래-오른쪽 더
                 ];
                 heartAngles.forEach(angle => {
                     createBossBullet(boss, angle, 'heart_shot');
@@ -3838,10 +3867,15 @@ function executeBossPattern(boss, pattern, currentTime) {
             break;
             
         case BOSS_PATTERNS.STAR_SHOT:
-            if (currentTime - boss.lastShot >= 1000) {  // 1초마다 발사
-                // 별 모양으로 발사 (5개 총알)
+            if (currentTime - boss.lastShot >= 5000) {  // 5초마다 발사
+                // 별 모양으로 발사 (10개 총알로 증가, 이중 별 패턴)
                 for (let i = 0; i < 5; i++) {
                     const angle = (Math.PI * 2 / 5) * i + Math.PI / 2;
+                    createBossBullet(boss, angle, 'star_shot');
+                }
+                // 내부 별 패턴 추가
+                for (let i = 0; i < 5; i++) {
+                    const angle = (Math.PI * 2 / 5) * i + Math.PI / 2 + Math.PI / 10;
                     createBossBullet(boss, angle, 'star_shot');
                 }
                 boss.lastShot = currentTime;
@@ -3849,26 +3883,33 @@ function executeBossPattern(boss, pattern, currentTime) {
             break;
             
         case BOSS_PATTERNS.FLOWER_SHOT:
-            if (currentTime - boss.lastShot >= 800) {  // 0.8초마다 발사
-                // 꽃 모양으로 발사 (6개 총알)
+            if (currentTime - boss.lastShot >= 5000) {  // 5초마다 발사
+                // 꽃 모양으로 발사 (12개 총알로 증가, 이중 꽃잎 패턴)
                 for (let i = 0; i < 6; i++) {
                     const angle = (Math.PI * 2 / 6) * i;
                     createBossBullet(boss, angle, 'flower_shot');
                 }
-                // 중앙에 추가 발사
-                createBossBullet(boss, Math.PI / 2, 'flower_shot');
+                // 내부 꽃잎 패턴 추가
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI * 2 / 6) * i + Math.PI / 12;
+                    createBossBullet(boss, angle, 'flower_shot');
+                }
                 boss.lastShot = currentTime;
             }
             break;
             
         case BOSS_PATTERNS.BUTTERFLY_SHOT:
-            if (currentTime - boss.lastShot >= 900) {  // 0.9초마다 발사
-                // 나비 모양으로 발사 (4개 총알)
+            if (currentTime - boss.lastShot >= 5000) {  // 5초마다 발사
+                // 나비 모양으로 발사 (8개 총알로 증가, 이중 나비 패턴)
                 const butterflyAngles = [
                     Math.PI / 4,           // 오른쪽-위
                     Math.PI - Math.PI / 4, // 왼쪽-위
                     Math.PI / 2 + Math.PI / 4, // 오른쪽-아래
-                    Math.PI / 2 - Math.PI / 4  // 왼쪽-아래
+                    Math.PI / 2 - Math.PI / 4,  // 왼쪽-아래
+                    Math.PI / 6,           // 오른쪽-위 더
+                    Math.PI - Math.PI / 6, // 왼쪽-위 더
+                    Math.PI / 2 + Math.PI / 6, // 오른쪽-아래 더
+                    Math.PI / 2 - Math.PI / 6  // 왼쪽-아래 더
                 ];
                 butterflyAngles.forEach(angle => {
                     createBossBullet(boss, angle, 'butterfly_shot');
@@ -3878,9 +3919,11 @@ function executeBossPattern(boss, pattern, currentTime) {
             break;
             
         case BOSS_PATTERNS.SPIRAL_WAVE:
-            if (currentTime - boss.lastShot >= 300) {  // 0.3초마다 발사
+            if (currentTime - boss.lastShot >= 5000) {  // 5초마다 발사
+                // 이중 나선 패턴으로 발사
                 createBossBullet(boss, boss.patternAngle, 'spiral_wave');
-                boss.patternAngle += Math.PI / 6;  // 30도씩 회전
+                createBossBullet(boss, boss.patternAngle + Math.PI, 'spiral_wave'); // 반대 방향
+                boss.patternAngle += Math.PI / 8;  // 22.5도씩 회전 (더 부드럽게)
                 boss.lastShot = currentTime;
                 
                 // 나선 패턴이 한 바퀴 완료되면 초기화
@@ -3891,11 +3934,11 @@ function executeBossPattern(boss, pattern, currentTime) {
             break;
             
         case BOSS_PATTERNS.CONCENTRIC_CIRCLES:
-            if (currentTime - boss.lastShot >= 1500) {  // 1.5초마다 발사
-                // 동심원으로 발사 (3개 원, 각각 8개 총알)
-                for (let ring = 0; ring < 3; ring++) {
-                    for (let i = 0; i < 8; i++) {
-                        const angle = (Math.PI * 2 / 8) * i;
+            if (currentTime - boss.lastShot >= 5000) {  // 5초마다 발사
+                // 동심원으로 발사 (4개 원으로 증가, 각각 12개 총알로 증가)
+                for (let ring = 0; ring < 4; ring++) {
+                    for (let i = 0; i < 12; i++) {
+                        const angle = (Math.PI * 2 / 12) * i + (ring * Math.PI / 24); // 약간씩 회전
                         createBossBullet(boss, angle, 'concentric_circles');
                     }
                 }
@@ -3904,10 +3947,15 @@ function executeBossPattern(boss, pattern, currentTime) {
             break;
             
         case BOSS_PATTERNS.FIREWORK_SHOT:
-            if (currentTime - boss.lastShot >= 2000) {  // 2초마다 발사
-                // 불꽃놀이 모양으로 발사 (12개 총알)
+            if (currentTime - boss.lastShot >= 5000) {  // 5초마다 발사
+                // 불꽃놀이 모양으로 발사 (18개 총알로 증가, 이중 불꽃놀이)
                 for (let i = 0; i < 12; i++) {
                     const angle = (Math.PI * 2 / 12) * i;
+                    createBossBullet(boss, angle, 'firework_shot');
+                }
+                // 내부 불꽃놀이 추가
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI * 2 / 6) * i + Math.PI / 12;
                     createBossBullet(boss, angle, 'firework_shot');
                 }
                 boss.lastShot = currentTime;
@@ -3915,9 +3963,9 @@ function executeBossPattern(boss, pattern, currentTime) {
             break;
             
         case BOSS_PATTERNS.CHAOS_SHOT:
-            if (currentTime - boss.lastShot >= 500) {  // 0.5초마다 발사
-                // 혼돈 모양으로 발사 (랜덤 각도)
-                for (let i = 0; i < 6; i++) {
+            if (currentTime - boss.lastShot >= 5000) {  // 5초마다 발사
+                // 혼돈 모양으로 발사 (랜덤 각도, 12개 총알로 증가)
+                for (let i = 0; i < 12; i++) {
                     const angle = Math.random() * Math.PI * 2;
                     createBossBullet(boss, angle, 'chaos_shot');
                 }
@@ -4216,15 +4264,15 @@ function checkLevelUp() {
             patternChance: 1.0,
             maxEnemies: 20 + (gameLevel - 5) * 2,
             bossHealth: 2000 + (gameLevel - 5) * 500,
-            bossSpawnInterval: Math.max(10000, 20000 - (gameLevel - 5) * 1000),
+            bossSpawnInterval: 10000, // 10초로 고정
             powerUpChance: 0.3,
             bombDropChance: 0.3,
             dynamiteDropChance: 0.25
         };
         
-        // 보스 설정 업데이트 (등장 간격은 고정 유지)
+        // 보스 설정 업데이트
         BOSS_SETTINGS.HEALTH = currentDifficulty.bossHealth;
-        // BOSS_SETTINGS.SPAWN_INTERVAL = currentDifficulty.bossSpawnInterval; // 등장 간격 변경 방지
+        BOSS_SETTINGS.SPAWN_INTERVAL = currentDifficulty.bossSpawnInterval;
         
         // 레벨업 메시지 표시
         ctx.fillStyle = 'yellow';
@@ -4791,6 +4839,10 @@ function handleGameInput(e) {
     if (isStartScreen && e.code === 'Space') {
         e.preventDefault();
         isStartScreen = false;
+        // 보스 설정 즉시 적용
+        const handleDifficulty = DIFFICULTY_SETTINGS[gameLevel] || DIFFICULTY_SETTINGS[5];
+        BOSS_SETTINGS.HEALTH = handleDifficulty.bossHealth;
+        BOSS_SETTINGS.SPAWN_INTERVAL = handleDifficulty.bossSpawnInterval;
         console.log('시작 화면에서 스페이스바 눌림 - 게임 시작');
         return;
     }
