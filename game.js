@@ -3454,7 +3454,7 @@ function createBoss() {
         // 패턴 관련 타이머 변수들
         lastPatternChange: currentTime,
         patternDuration: 5000,  // 5초마다 패턴 변경
-        lastShot: currentTime,
+        lastShot: currentTime - 5000, // 즉시 발사할 수 있도록 과거 시간으로 설정
         patternAngle: 0,
         // 단일 패턴 시스템 변수들
         usedPatterns: [],  // 사용한 패턴들 기록
