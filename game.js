@@ -4275,10 +4275,10 @@ function executeBossPattern(boss, pattern, currentTime) {
         // 확산 패턴들 추가
         case BOSS_PATTERNS.SPREAD_CIRCLE:
             if (currentTime - boss.lastShot >= 600) {
-                for (let i = 0; i < 12; i++) {
-                    const baseAngle = (Math.PI * 2 / 12) * i;
-                    for (let j = 0; j < 3; j++) {
-                        const spreadAngle = baseAngle + (j - 1) * 0.2;
+                for (let i = 0; i < 6; i++) {
+                    const baseAngle = (Math.PI * 2 / 6) * i;
+                    for (let j = 0; j < 2; j++) {
+                        const spreadAngle = baseAngle + (j - 0.5) * 0.2;
                         createBossBullet(boss, spreadAngle, pattern);
                     }
                 }
@@ -4290,8 +4290,8 @@ function executeBossPattern(boss, pattern, currentTime) {
             if (currentTime - boss.lastShot >= 500) {
                 const crossAngles = [0, Math.PI/2, Math.PI, Math.PI*3/2];
                 crossAngles.forEach(angle => {
-                    for (let i = 0; i < 5; i++) {
-                        const spreadAngle = angle + (i - 2) * 0.15;
+                    for (let i = 0; i < 3; i++) {
+                        const spreadAngle = angle + (i - 1) * 0.15;
                         createBossBullet(boss, spreadAngle, pattern);
                     }
                 });
@@ -4301,10 +4301,10 @@ function executeBossPattern(boss, pattern, currentTime) {
             
         case BOSS_PATTERNS.SPREAD_SPIRAL:
             if (currentTime - boss.lastShot >= 500) {
-                for (let i = 0; i < 6; i++) {
-                    const baseAngle = boss.patternAngle + (i * Math.PI * 2 / 6);
-                    for (let j = 0; j < 3; j++) {
-                        const spreadAngle = baseAngle + (j - 1) * 0.25;
+                for (let i = 0; i < 3; i++) {
+                    const baseAngle = boss.patternAngle + (i * Math.PI * 2 / 3);
+                    for (let j = 0; j < 2; j++) {
+                        const spreadAngle = baseAngle + (j - 0.5) * 0.25;
                         createBossBullet(boss, spreadAngle, pattern);
                     }
                 }
@@ -4315,11 +4315,11 @@ function executeBossPattern(boss, pattern, currentTime) {
             
         case BOSS_PATTERNS.SPREAD_WAVE:
             if (currentTime - boss.lastShot >= 500) {
-                const waveCount = 6;
+                const waveCount = 3;
                 for (let i = 0; i < waveCount; i++) {
                     const baseAngle = Math.PI / 2 + Math.sin(boss.patternAngle + i * 0.5) * 0.8;
-                    for (let j = 0; j < 3; j++) {
-                        const spreadAngle = baseAngle + (j - 1) * 0.3;
+                    for (let j = 0; j < 2; j++) {
+                        const spreadAngle = baseAngle + (j - 0.5) * 0.3;
                         createBossBullet(boss, spreadAngle, pattern);
                     }
                 }
@@ -4332,8 +4332,8 @@ function executeBossPattern(boss, pattern, currentTime) {
             if (currentTime - boss.lastShot >= 700) {
                 const diamondAngles = [Math.PI/4, Math.PI*3/4, Math.PI*5/4, Math.PI*7/4];
                 diamondAngles.forEach(angle => {
-                    for (let i = 0; i < 4; i++) {
-                        const spreadAngle = angle + (i - 1.5) * 0.2;
+                    for (let i = 0; i < 2; i++) {
+                        const spreadAngle = angle + (i - 0.5) * 0.2;
                         createBossBullet(boss, spreadAngle, pattern);
                     }
                 });
@@ -4346,8 +4346,8 @@ function executeBossPattern(boss, pattern, currentTime) {
                 const burstCount = Math.floor(Math.random() * 2) + 2;
                 for (let burst = 0; burst < burstCount; burst++) {
                     const burstAngle = (Math.PI * 2 / burstCount) * burst + Math.random() * 0.3;
-                    for (let i = 0; i < 5; i++) {
-                        const angle = burstAngle + (i * Math.PI * 2 / 5);
+                    for (let i = 0; i < 3; i++) {
+                        const angle = burstAngle + (i * Math.PI * 2 / 3);
                         createBossBullet(boss, angle, pattern);
                     }
                 }
@@ -4358,8 +4358,8 @@ function executeBossPattern(boss, pattern, currentTime) {
         case BOSS_PATTERNS.SPREAD_TARGETED:
             if (currentTime - boss.lastShot >= 800) {
                 const angleToPlayer = Math.atan2(player.y - boss.y, player.x - boss.x);
-                for (let i = 0; i < 7; i++) {
-                    const spreadAngle = angleToPlayer + (i - 3) * 0.25;
+                for (let i = 0; i < 4; i++) {
+                    const spreadAngle = angleToPlayer + (i - 1.5) * 0.25;
                     createBossBullet(boss, spreadAngle, pattern);
                 }
                 boss.lastShot = currentTime;
@@ -4368,10 +4368,10 @@ function executeBossPattern(boss, pattern, currentTime) {
             
         case BOSS_PATTERNS.SPREAD_RANDOM:
             if (currentTime - boss.lastShot >= 400) {
-                for (let i = 0; i < 8; i++) {
+                for (let i = 0; i < 4; i++) {
                     const randomAngle = Math.random() * Math.PI * 2;
-                    for (let j = 0; j < 3; j++) {
-                        const spreadAngle = randomAngle + (j - 1) * 0.3;
+                    for (let j = 0; j < 2; j++) {
+                        const spreadAngle = randomAngle + (j - 0.5) * 0.3;
                         createBossBullet(boss, spreadAngle, pattern);
                     }
                 }
@@ -4381,10 +4381,10 @@ function executeBossPattern(boss, pattern, currentTime) {
             
         case BOSS_PATTERNS.MEGA_SPREAD:
             if (currentTime - boss.lastShot >= 1500) {
-                for (let i = 0; i < 16; i++) {
-                    const baseAngle = (Math.PI * 2 / 16) * i;
-                    for (let j = 0; j < 3; j++) {
-                        const spreadAngle = baseAngle + (j - 1) * 0.15;
+                for (let i = 0; i < 8; i++) {
+                    const baseAngle = (Math.PI * 2 / 8) * i;
+                    for (let j = 0; j < 2; j++) {
+                        const spreadAngle = baseAngle + (j - 0.5) * 0.15;
                         createBossBullet(boss, spreadAngle, pattern);
                     }
                 }
@@ -4394,10 +4394,10 @@ function executeBossPattern(boss, pattern, currentTime) {
             
         case BOSS_PATTERNS.CHAOS_SPREAD:
             if (currentTime - boss.lastShot >= 600) {
-                const chaosCount = 5 + Math.floor(Math.random() * 4);
+                const chaosCount = 3 + Math.floor(Math.random() * 2);
                 for (let i = 0; i < chaosCount; i++) {
                     const randomAngle = Math.random() * Math.PI * 2;
-                    const spreadCount = 2 + Math.floor(Math.random() * 3);
+                    const spreadCount = 1 + Math.floor(Math.random() * 2);
                     for (let j = 0; j < spreadCount; j++) {
                         const spreadAngle = randomAngle + (j - spreadCount/2) * 0.3;
                         createBossBullet(boss, spreadAngle, pattern);
@@ -4411,7 +4411,7 @@ function executeBossPattern(boss, pattern, currentTime) {
             if (currentTime - boss.lastShot >= 300) {
                 const windmillAngles = [0, Math.PI/2, Math.PI, Math.PI*3/2];
                 windmillAngles.forEach(baseAngle => {
-                    const bulletCount = 3 + Math.floor(Math.random() * 2);
+                    const bulletCount = 2 + Math.floor(Math.random() * 1);
                     for (let i = 0; i < bulletCount; i++) {
                         const spreadOffset = (i - (bulletCount-1)/2) * 0.25;
                         const angle = baseAngle + spreadOffset;
