@@ -1775,7 +1775,7 @@ function handleCollision() {
             }
         }
         
-        // 게임 오버 시 폭발음 재생
+        // 게임 오버 시 폭발음 재생 - explosionSound로 변경
         applyGlobalVolume();
         explosionSound.currentTime = 0;
         explosionSound.play().catch(error => {
@@ -2487,7 +2487,12 @@ function handleSnakePattern() {
                             enemy.y + enemy.height/2
                         ));
                         updateScore(20); //뱀 패턴 비행기 한 대당 획득 점수
-                        playExplosionSound(true); // 뱀패턴 효과음으로 설정
+                        // 뱀패턴 효과음으로 shootSound 직접 재생
+                        applyGlobalVolume();
+                        shootSound.currentTime = 0;
+                        shootSound.play().catch(error => {
+                            console.log('오디오 재생 실패:', error);
+                        });
                         
                         // 즉시 제거 - 페이드아웃 효과 제거
                         enemy.isHit = true;
@@ -3521,10 +3526,10 @@ function handleBullets() {
             if (checkCollision(bullet, bomb)) {
                 // 폭탄 폭발
                 explosions.push(new Explosion(bomb.x, bomb.y, true));
-                // 폭발음 재생
+                // 폭발음 재생 - shootSound로 변경
                 applyGlobalVolume();
-                explosionSound.currentTime = 0;
-                explosionSound.play().catch(error => {
+                shootSound.currentTime = 0;
+                shootSound.play().catch(error => {
                     console.log('오디오 재생 실패:', error);
                 });
                 return false;
@@ -3537,10 +3542,10 @@ function handleBullets() {
             if (checkCollision(bullet, dynamite)) {
                 // 다이나마이트 폭발
                 explosions.push(new Explosion(dynamite.x, dynamite.y, true));
-                // 폭발음 재생
+                // 폭발음 재생 - shootSound로 변경
                 applyGlobalVolume();
-                explosionSound.currentTime = 0;
-                explosionSound.play().catch(error => {
+                shootSound.currentTime = 0;
+                shootSound.play().catch(error => {
                     console.log('오디오 재생 실패:', error);
                 });
                 return false;
@@ -3624,10 +3629,10 @@ function handleBullets() {
                         ));
                     }
                     
-                    // 폭발음 재생
+                    // 폭발음 재생 - shootSound로 변경
                     applyGlobalVolume();
-                    explosionSound.currentTime = 0;
-                    explosionSound.play().catch(error => {
+                    shootSound.currentTime = 0;
+                    shootSound.play().catch(error => {
                         console.log('방어막 적 파괴 효과음 재생 실패:', error);
                     });
                     
@@ -3898,7 +3903,7 @@ function handleBossPattern(boss) {
                 false
             ));
         }
-        // 보스 파괴 시 폭발음 재생
+        // 보스 파괴 시 폭발음 재생 - explosionSound로 변경
         applyGlobalVolume();
         explosionSound.currentTime = 0;
         explosionSound.play().catch(error => {
