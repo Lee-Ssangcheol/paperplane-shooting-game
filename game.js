@@ -162,7 +162,7 @@ let specialWeaponStock = 0;  // 특수무기 보유 개수
 let specialWeaponAccumulatedPoints = 0;  // 특수무기 누적 점수
 const SPECIAL_WEAPON_MAX_CHARGE = 5000;  // 특수무기 최대 충전량을 5000으로 설정
 const SPECIAL_WEAPON_MAX_STOCK = 5;  // 최대 보유 가능한 특수무기 개수
-const SPECIAL_WEAPON_STOCK_POINTS = 1000;  // 특수무기 1개당 필요한 점수
+const SPECIAL_WEAPON_STOCK_POINTS = 4000;  // 특수무기 1개당 필요한 점수 (2500 → 4000으로 상향)
 
 // 보스 경고 시스템 변수 추가
 let bossWarning = {
@@ -519,7 +519,7 @@ const difficultySettings = {
         horizontalSpeedRange: 2,
         patternChance: 0.2,
         maxEnemies: 5,
-        bossHealth: 800,
+        bossHealth: 3000,
         bossSpawnInterval: 10000, // 10초
         powerUpChance: 0.1,
         bombDropChance: 0.1,
@@ -531,7 +531,7 @@ const difficultySettings = {
         horizontalSpeedRange: 3,
         patternChance: 0.4,
         maxEnemies: 8,
-        bossHealth: 1000,
+        bossHealth: 3000,
         bossSpawnInterval: 10000, // 10초
         powerUpChance: 0.15,
         bombDropChance: 0.15,
@@ -543,7 +543,7 @@ const difficultySettings = {
         horizontalSpeedRange: 4,
         patternChance: 0.6,
         maxEnemies: 12,
-        bossHealth: 1200,
+        bossHealth: 3000,
         bossSpawnInterval: 10000, // 10초
         powerUpChance: 0.2,
         bombDropChance: 0.2,
@@ -555,7 +555,7 @@ const difficultySettings = {
         horizontalSpeedRange: 5,
         patternChance: 0.8,
         maxEnemies: 15,
-        bossHealth: 1500,
+        bossHealth: 3000,
         bossSpawnInterval: 10000, // 10초
         powerUpChance: 0.25,
         bombDropChance: 0.25,
@@ -567,7 +567,7 @@ const difficultySettings = {
         horizontalSpeedRange: 6,
         patternChance: 1.0,
         maxEnemies: 20,
-        bossHealth: 2000,
+        bossHealth: 3000,
         bossSpawnInterval: 10000, // 10초
         powerUpChance: 0.3,
         bombDropChance: 0.3,
@@ -1212,7 +1212,7 @@ function restartGame() {
     bossStartTime = Date.now();
     
     // 8. 보스 설정 즉시 적용 (게임 재시작 시)
-    const restartDifficulty = DIFFICULTY_SETTINGS[gameLevel] || DIFFICULTY_SETTINGS[5];
+    const restartDifficulty = difficultySettings[Math.min(gameLevel, 5)] || difficultySettings[5];
     BOSS_SETTINGS.HEALTH = restartDifficulty.bossHealth;
     BOSS_SETTINGS.SPAWN_INTERVAL = restartDifficulty.bossSpawnInterval;
        
@@ -1252,7 +1252,7 @@ function restartGame() {
     isPaused = false;
     
     // 13. 보스 설정 즉시 적용 (게임 시작 시)
-    const startDifficulty = DIFFICULTY_SETTINGS[gameLevel] || DIFFICULTY_SETTINGS[5];
+    const startDifficulty = difficultySettings[Math.min(gameLevel, 5)] || difficultySettings[5];
     BOSS_SETTINGS.HEALTH = startDifficulty.bossHealth;
     BOSS_SETTINGS.SPAWN_INTERVAL = startDifficulty.bossSpawnInterval;
     
@@ -3231,7 +3231,7 @@ document.addEventListener('keydown', (e) => {
             } else {
                 isStartScreen = false;
                 // 보스 설정 즉시 적용
-                const spaceDifficulty = DIFFICULTY_SETTINGS[gameLevel] || DIFFICULTY_SETTINGS[5];
+                const spaceDifficulty = difficultySettings[Math.min(gameLevel, 5)] || difficultySettings[5];
                 BOSS_SETTINGS.HEALTH = spaceDifficulty.bossHealth;
                 BOSS_SETTINGS.SPAWN_INTERVAL = spaceDifficulty.bossSpawnInterval;
             }
@@ -3280,7 +3280,7 @@ document.addEventListener('keydown', (e) => {
     if (isStartScreen && e.code === 'Enter') {
         isStartScreen = false;
         // 보스 설정 즉시 적용
-        const enterDifficulty = DIFFICULTY_SETTINGS[gameLevel] || DIFFICULTY_SETTINGS[5];
+        const enterDifficulty = difficultySettings[Math.min(gameLevel, 5)] || difficultySettings[5];
         BOSS_SETTINGS.HEALTH = enterDifficulty.bossHealth;
         BOSS_SETTINGS.SPAWN_INTERVAL = enterDifficulty.bossSpawnInterval;
         return;
@@ -3666,7 +3666,7 @@ function handleBullets() {
 
 // 보스 관련 상수 추가
 const BOSS_SETTINGS = {
-    HEALTH: 4000,        // 기본 체력 (40발 피격으로 파괴)
+    HEALTH: 3000,        // 기본 체력 (30발 피격으로 파괴)
     DAMAGE: 50,          // 보스 총알 데미지
     SPEED: 2,           // 보스 이동 속도
     BULLET_SPEED: 5,    // 보스 총알 속도 (속도 증가)
@@ -3675,9 +3675,9 @@ const BOSS_SETTINGS = {
     TIME_LIMIT: 25000,  // 보스 시간 제한 (25초)
     BONUS_SCORE: 500,    // 보스 처치 보너스 점수를 500으로 설정
     PHASE_THRESHOLDS: [  // 페이즈 전환 체력 임계값
-        { health: 3000, speed: 2.5, bulletSpeed: 6 },
-        { health: 2000, speed: 3, bulletSpeed: 7 },
-        { health: 1000, speed: 3.5, bulletSpeed: 8 }
+        { health: 2250, speed: 2.5, bulletSpeed: 6 },
+        { health: 1500, speed: 3, bulletSpeed: 7 },
+        { health: 750, speed: 3.5, bulletSpeed: 8 }
     ]
 };
 
@@ -3849,6 +3849,9 @@ function handleBossPattern(boss) {
         bossWarning.timer = 0;
         bossWarning.patternDetails = '';
         
+        // 보스 시간 초과 시간 기록 (다음 보스 생성 간격 계산용)
+        lastBossSpawnTime = currentTime;
+        
         return;
     }
     
@@ -3864,6 +3867,8 @@ function handleBossPattern(boss) {
             if (bossIndex !== -1) {
                 enemies.splice(bossIndex, 1);
             }
+            // 보스 완전 제거 시간 기록 (다음 보스 생성 간격 계산용)
+            lastBossSpawnTime = Date.now();
             return;
         }
         return;
@@ -3919,6 +3924,9 @@ function handleBossPattern(boss) {
         
         // 보스 파괴 시 목숨 1개 추가
         maxLives++; // 최대 목숨 증가
+        
+        // 보스 파괴 시간 기록 (다음 보스 생성 간격 계산용)
+        lastBossSpawnTime = currentTime;
         
         return;
     }
@@ -4279,7 +4287,7 @@ function executeBossPattern(boss, pattern, currentTime) {
             
         // 확산 패턴들 추가
         case BOSS_PATTERNS.SPREAD_CIRCLE:
-            if (currentTime - boss.lastShot >= 600) {
+            if (currentTime - boss.lastShot >= 400) {
                 for (let i = 0; i < 6; i++) {
                     const baseAngle = (Math.PI * 2 / 6) * i;
                     for (let j = 0; j < 2; j++) {
@@ -4292,7 +4300,7 @@ function executeBossPattern(boss, pattern, currentTime) {
             break;
             
         case BOSS_PATTERNS.SPREAD_CROSS:
-            if (currentTime - boss.lastShot >= 500) {
+            if (currentTime - boss.lastShot >= 350) {
                 const crossAngles = [0, Math.PI/2, Math.PI, Math.PI*3/2];
                 crossAngles.forEach(angle => {
                     for (let i = 0; i < 3; i++) {
@@ -4305,7 +4313,7 @@ function executeBossPattern(boss, pattern, currentTime) {
             break;
             
         case BOSS_PATTERNS.SPREAD_SPIRAL:
-            if (currentTime - boss.lastShot >= 500) {
+            if (currentTime - boss.lastShot >= 350) {
                 for (let i = 0; i < 3; i++) {
                     const baseAngle = boss.patternAngle + (i * Math.PI * 2 / 3);
                     for (let j = 0; j < 2; j++) {
@@ -4319,7 +4327,7 @@ function executeBossPattern(boss, pattern, currentTime) {
             break;
             
         case BOSS_PATTERNS.SPREAD_WAVE:
-            if (currentTime - boss.lastShot >= 500) {
+            if (currentTime - boss.lastShot >= 350) {
                 const waveCount = 3;
                 for (let i = 0; i < waveCount; i++) {
                     const baseAngle = Math.PI / 2 + Math.sin(boss.patternAngle + i * 0.5) * 0.8;
@@ -4334,7 +4342,7 @@ function executeBossPattern(boss, pattern, currentTime) {
             break;
             
         case BOSS_PATTERNS.SPREAD_DIAMOND:
-            if (currentTime - boss.lastShot >= 700) {
+            if (currentTime - boss.lastShot >= 500) {
                 const diamondAngles = [Math.PI/4, Math.PI*3/4, Math.PI*5/4, Math.PI*7/4];
                 diamondAngles.forEach(angle => {
                     for (let i = 0; i < 2; i++) {
@@ -4347,7 +4355,7 @@ function executeBossPattern(boss, pattern, currentTime) {
             break;
             
         case BOSS_PATTERNS.SPREAD_BURST:
-            if (currentTime - boss.lastShot >= 500) {
+            if (currentTime - boss.lastShot >= 350) {
                 const burstCount = Math.floor(Math.random() * 2) + 2;
                 for (let burst = 0; burst < burstCount; burst++) {
                     const burstAngle = (Math.PI * 2 / burstCount) * burst + Math.random() * 0.3;
@@ -4361,7 +4369,7 @@ function executeBossPattern(boss, pattern, currentTime) {
             break;
             
         case BOSS_PATTERNS.SPREAD_TARGETED:
-            if (currentTime - boss.lastShot >= 800) {
+            if (currentTime - boss.lastShot >= 600) {
                 const angleToPlayer = Math.atan2(player.y - boss.y, player.x - boss.x);
                 for (let i = 0; i < 4; i++) {
                     const spreadAngle = angleToPlayer + (i - 1.5) * 0.25;
@@ -4372,7 +4380,7 @@ function executeBossPattern(boss, pattern, currentTime) {
             break;
             
         case BOSS_PATTERNS.SPREAD_RANDOM:
-            if (currentTime - boss.lastShot >= 400) {
+            if (currentTime - boss.lastShot >= 300) {
                 for (let i = 0; i < 4; i++) {
                     const randomAngle = Math.random() * Math.PI * 2;
                     for (let j = 0; j < 2; j++) {
@@ -4385,7 +4393,7 @@ function executeBossPattern(boss, pattern, currentTime) {
             break;
             
         case BOSS_PATTERNS.MEGA_SPREAD:
-            if (currentTime - boss.lastShot >= 1500) {
+            if (currentTime - boss.lastShot >= 1000) {
                 for (let i = 0; i < 8; i++) {
                     const baseAngle = (Math.PI * 2 / 8) * i;
                     for (let j = 0; j < 2; j++) {
@@ -4398,7 +4406,7 @@ function executeBossPattern(boss, pattern, currentTime) {
             break;
             
         case BOSS_PATTERNS.CHAOS_SPREAD:
-            if (currentTime - boss.lastShot >= 600) {
+            if (currentTime - boss.lastShot >= 400) {
                 const chaosCount = 3 + Math.floor(Math.random() * 2);
                 for (let i = 0; i < chaosCount; i++) {
                     const randomAngle = Math.random() * Math.PI * 2;
@@ -4413,7 +4421,7 @@ function executeBossPattern(boss, pattern, currentTime) {
             break;
             
         case BOSS_PATTERNS.WINDMILL_SPREAD:
-            if (currentTime - boss.lastShot >= 300) {
+            if (currentTime - boss.lastShot >= 200) {
                 const windmillAngles = [0, Math.PI/2, Math.PI, Math.PI*3/2];
                 windmillAngles.forEach(baseAngle => {
                     const bulletCount = 2 + Math.floor(Math.random() * 1);
@@ -5501,7 +5509,7 @@ function handleGameInput(e) {
         e.preventDefault();
         isStartScreen = false;
         // 보스 설정 즉시 적용
-        const handleDifficulty = DIFFICULTY_SETTINGS[gameLevel] || DIFFICULTY_SETTINGS[5];
+        const handleDifficulty = difficultySettings[Math.min(gameLevel, 5)] || difficultySettings[5];
         BOSS_SETTINGS.HEALTH = handleDifficulty.bossHealth;
         BOSS_SETTINGS.SPAWN_INTERVAL = handleDifficulty.bossSpawnInterval;
         console.log('시작 화면에서 스페이스바 눌림 - 게임 시작');
