@@ -184,16 +184,16 @@ const BOSS_PATTERNS = {
     PINWHEEL_SHOT: 'pinwheel_shot',        // 바람개비 패턴
     TRIANGLE_SHOT: 'triangle_shot',        // 삼각형 패턴
     RECTANGLE_SHOT: 'rectangle_shot',      // 정사각형 패턴
-    PENTAGON_SHOT: 'pentagon_shot',        // 오각형 패턴
-    HEXAGON_SHOT: 'hexagon_shot',          // 육각형 패턴
-    OCTAGON_SHOT: 'octagon_shot',          // 팔각형 패턴
+    PENTAGON_SHOT: 'clover_shot',        // 네잎 클로버 패턴
+    HEXAGON_SHOT: 'wheel_shot',          // 수레바퀴 패턴
+    OCTAGON_SHOT: 'lightning_shot',      // 번개 표시 패턴
     CIRCLE_SHOT: 'circle_shot',            // 원형 패턴
     CROSS_SHOT: 'cross_shot',              // 십자 패턴
     HEART_SHOT: 'heart_shot',              // 하트 패턴
     STAR_SHOT: 'star_shot',                // 별 패턴
     FLOWER_SHOT: 'flower_shot',            // 꽃 패턴
     GEAR_SHOT: 'gear_shot',                // 기어 패턴
-    MOON_SHOT: 'moon_shot'                 // 달 패턴
+    MOON_SHOT: 'radiation_shot'            // 방사능 표시 패턴
 };
 
 // 헥스 색상을 RGB로 변환하는 함수
@@ -302,10 +302,10 @@ function renderBossBulletShape(bullet, color) {
         case 'rectangle_shot':
             // 정사각형 모양 총알
             ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 1.0)`;
-            ctx.fillRect(-size, -size, size * 2, size * 2);
+            ctx.fillRect(-size * 0.75, -size * 0.75, size * 1.5, size * 1.5);
             break;
             
-        case 'pentagon_shot':
+        case 'clover_shot':
             // 네잎 클로버 모양 총알
             ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 1.0)`;
             
@@ -325,7 +325,7 @@ function renderBossBulletShape(bullet, color) {
             ctx.fill();
             break;
             
-        case 'hexagon_shot':
+        case 'wheel_shot':
             // 수레바퀴 모양 총알 (투명한 홈)
             ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 1.0)`;
             
@@ -360,7 +360,7 @@ function renderBossBulletShape(bullet, color) {
             ctx.globalCompositeOperation = 'source-over';
             break;
             
-        case 'octagon_shot':
+        case 'lightning_shot':
             // 번개 표시 모양 총알 (명확한 지그재그)
             ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 1.0)`;
             ctx.beginPath();
@@ -477,7 +477,7 @@ function renderBossBulletShape(bullet, color) {
             ctx.fill();
             break;
             
-        case 'moon_shot':
+        case 'radiation_shot':
             // 방사능 표시 모양 총알 (명확한 방사선과 삼각형)
             ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 1.0)`;
             
@@ -541,16 +541,16 @@ const BOSS_PATTERN_COLORS = {
     'pinwheel_shot': '#00FFFF',           // 더 밝은 청록색
     'triangle_shot': '#32CD32',           // 밝은 라임그린
     'rectangle_shot': '#ADFF2F',          // 연두색
-    'pentagon_shot': '#00FF00',           // 녹색 (네잎 클로버)
-    'hexagon_shot': '#D3D3D3',            // 밝은 회색
-    'octagon_shot': '#FFD700',            // 밝은 골드
+    'clover_shot': '#00FF00',           // 녹색 (네잎 클로버)
+    'wheel_shot': '#D3D3D3',            // 밝은 회색 (수레바퀴)
+    'lightning_shot': '#FFD700',            // 밝은 골드 (번개 표시)
     'circle_shot': '#20B2AA',             // 청녹색
     'cross_shot': '#FF4500',              // 밝은 빨간색
     'heart_shot': '#FF69B4',              // 밝은 핫핑크
     'star_shot': '#FFFF00',               // 노란색
     'flower_shot': '#FF1493',             // 밝은 딥핑크
     'gear_shot': '#ADFF2F',               // 연두색
-    'moon_shot': '#FFFF00'                // 노란색
+    'radiation_shot': '#FFFF00'                // 노란색 (방사능 표시)
 };
 
 // 키보드 입력 상태
