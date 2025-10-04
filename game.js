@@ -3693,6 +3693,9 @@ function handleBullets() {
                     // 점수 보상 (방어막 적은 더 높은 점수)
                     updateScore(100);
                     
+                    // 보호막 비행기 파괴 시 생명 1개 추가
+                    maxLives++;
+                    
                     // 해당 적이 발사한 미사일들 제거
                     // removeEnemyMissiles(enemy);
                 } else {
