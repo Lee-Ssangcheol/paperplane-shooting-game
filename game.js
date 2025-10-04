@@ -2651,6 +2651,13 @@ function checkEnemyCollisions(enemy) {
                         ));
                     }
                     
+                    // 특수무기로 보스 파괴 시 폭발음 재생
+                    applyGlobalVolume();
+                    explosionSound.currentTime = 0;
+                    explosionSound.play().catch(error => {
+                        console.log('특수무기 보스 파괴 효과음 재생 실패:', error);
+                    });
+                    
                     bossActive = false;
                     return false;
                 }
