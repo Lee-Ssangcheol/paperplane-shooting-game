@@ -1163,7 +1163,6 @@ async function initializeGame() {
         
         // 12. 사운드 관련 상태 초기화
         lastCollisionTime = 0;
-        lastExplosionTime = 0;
         
         // 13. 패턴 추적 시스템 초기화
         levelBossPatterns.usedPatterns = [];
@@ -1312,7 +1311,6 @@ function restartGame() {
     
     // 13. 사운드 관련 상태 초기화
     lastCollisionTime = 0;
-    lastExplosionTime = 0;
     
     // 14. 패턴 추적 시스템 초기화
     levelBossPatterns.usedPatterns = [];
@@ -2299,9 +2297,8 @@ function handleEnemies() {
         lastEnemySpawnTime = currentTime;
     }
 
-    // 방어막 적 생성 (레벨 3 이상에서 등장)
-    if (gameLevel >= 3 && 
-        currentTime - lastShieldedEnemySpawnTime >= 8000 && // 8초마다
+    // 방어막 적 생성 (모든 레벨에서 등장)
+    if (currentTime - lastShieldedEnemySpawnTime >= 8000 && // 8초마다
         shieldedEnemies.length < 2 && // 최대 2개까지만
         !isGameOver) {
         createShieldedEnemy();
@@ -3683,10 +3680,10 @@ function handleBullets() {
                         ));
                     }
                     
-                    // 폭발음 재생 - shootSound로 변경
+                    // 폭발음 재생 - explosionSound로 변경
                     applyGlobalVolume();
-                    shootSound.currentTime = 0;
-                    shootSound.play().catch(error => {
+                    explosionSound.currentTime = 0;
+                    explosionSound.play().catch(error => {
                         console.log('방어막 적 파괴 효과음 재생 실패:', error);
                     });
                     
@@ -5306,10 +5303,6 @@ let maxLives = 5;  // 최대 목숨 수
 // === 사운드 볼륨 전역 변수 및 함수 추가 ===
 let globalVolume = 0.1;
 let isMuted = false;
-let lastExplosionTime = 0;
-const EXPLOSION_COOLDOWN = 100; // 효과음 재생 간격 (밀리초)
-const VOLUME_DECAY = 0.8; // 연속 재생 시 볼륨 감소 비율
-const SNAKE_EXPLOSION_VOLUME_MULTIPLIER = 3.0; // 뱀패턴 효과음 볼륨 배수
 
 // 볼륨 값을 0-1 범위로 제한하는 함수
 function clampVolume(volume) {
@@ -5319,34 +5312,9 @@ function clampVolume(volume) {
 function applyGlobalVolume() {
     const vol = isMuted ? 0 : clampVolume(globalVolume);
     shootSound.volume = vol;
-    // explosionSound.volume = vol;
     collisionSound.volume = vol;
 }
 
-function playExplosionSound(isSnakePattern = false) {
-    const currentTime = Date.now();
-    let volumeMultiplier = 2.0;  // 플레이어 폭발음 볼륨 배수
-    
-    if (isSnakePattern) {
-        volumeMultiplier = SNAKE_EXPLOSION_VOLUME_MULTIPLIER;
-    }
-    
-    if (currentTime - lastExplosionTime < EXPLOSION_COOLDOWN) {
-        // 연속 재생 시 볼륨 감소
-        const decayedVolume = globalVolume * Math.pow(VOLUME_DECAY, 
-            Math.floor((currentTime - lastExplosionTime) / EXPLOSION_COOLDOWN));
-        explosionSound.volume = isMuted ? 0 : clampVolume(decayedVolume * volumeMultiplier);
-    } else {
-        // 일반 재생
-        explosionSound.volume = isMuted ? 0 : clampVolume(globalVolume * volumeMultiplier);
-    }
-    
-    explosionSound.currentTime = 0;
-    explosionSound.play().catch(error => {
-        console.log('오디오 재생 실패:', error);
-    });
-    lastExplosionTime = currentTime;
-}
 
 // 게임 상태 변수 추가
 let isGameActive = true;
