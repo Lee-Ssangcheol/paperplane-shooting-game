@@ -2628,10 +2628,8 @@ function checkEnemyCollisions(enemy) {
                     enemy.health = 0;
                     bossHealth = 0;
                     bossDestroyed = true;
+                    enemy.timeoutDestroyed = false; // 실제 파괴로 표시
                     updateScore(BOSS_SETTINGS.BONUS_SCORE);
-                    
-                    // 보스 파괴 시 목숨 1개 추가
-                    maxLives++; // 최대 목숨 증가
                     
                     // 큰 폭발 효과
                     explosions.push(new Explosion(
@@ -3667,7 +3665,10 @@ function handleBullets() {
                 explosions.push(new Explosion(bullet.x, bullet.y, false));
                 
                 // 방어막이 비활성화된 경우 또는 체력이 0인 경우
-                if (enemy.health <= 0) {
+                if (enemy.health <= 0 && !enemy.destroyed) {
+                    // 중복 파괴 방지
+                    enemy.destroyed = true;
+                    
                     // 적 파괴
                     shieldedEnemies.splice(i, 1);
                     
@@ -3820,6 +3821,7 @@ function createBoss() {
         // 단일 패턴 시스템 변수들
         usedPatterns: [],  // 사용한 패턴들 기록
         currentPatterns: [],  // 현재 사용 중인 패턴들
+        timeoutDestroyed: false,  // 시간 초과로 파괴되었는지 여부
         // 레벨별 패턴 순서 시스템 (레벨 1~5용)
         patternSequence: [],  // 현재 레벨에서 사용할 패턴 순서
         currentPatternIndex: 0,  // 현재 패턴 인덱스
@@ -3900,10 +3902,11 @@ function handleBossPattern(boss) {
         boss.leaveDirection = Math.random() < 0.5 ? -1 : 1; // 왼쪽 또는 오른쪽으로 이동
         boss.leaveSpeed = 5; // 빠른 속도로 이동
         
-        // 보스 상태 초기화
+        // 보스 상태 초기화 (시간 초과로 인한 파괴)
         bossActive = false;
         bossHealth = 0;
         bossDestroyed = true;
+        boss.timeoutDestroyed = true; // 시간 초과로 파괴된 것을 표시
         
         // 보스 경고 시스템 초기화
         bossWarning.active = false;
@@ -3942,6 +3945,7 @@ function handleBossPattern(boss) {
         bossDestroyed = true;
         bossActive = false;
         bossHealth = 0;
+        boss.timeoutDestroyed = false; // 실제 파괴로 표시
         updateScore(BOSS_SETTINGS.BONUS_SCORE);
         
         // 레벨 1~5에서 패턴 사용 기록
@@ -3952,8 +3956,10 @@ function handleBossPattern(boss) {
             }
         }
         
-        // 보스 파괴 시 목숨 1개 추가
-        maxLives++; // 최대 목숨 증가
+        // 보스 파괴 시 목숨 1개 추가 (시간 초과가 아닌 경우에만)
+        if (!boss.timeoutDestroyed) {
+            maxLives++; // 최대 목숨 증가
+        }
         
         // 큰 폭발 효과
         explosions.push(new Explosion(
@@ -4358,20 +4364,58 @@ function drawStartScreen() {
             star.y = 0;
             star.x = Math.random() * canvas.width;
         }
-        
         ctx.fillStyle = `rgba(255, 255, 255, ${star.brightness})`;
-        ctx.fillRect(star.x, star.y, 2, 2);
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
     });
+
+    // 제목 그라데이션
+    const titleGradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    titleGradient.addColorStop(0, '#ff0000');
+    titleGradient.addColorStop(0.5, '#ffff00');
+    titleGradient.addColorStop(1, '#ff0000');
+
+    // 제목 그림자
+    ctx.shadowColor = 'rgba(255, 0, 0, 0.5)';
+    ctx.shadowBlur = 20;
+    ctx.shadowOffsetX = 5;
+    ctx.shadowOffsetY = 5;
+
+    // 제목
+    ctx.font = 'bold 50px Arial';
+    ctx.fillStyle = titleGradient;
+    ctx.textAlign = 'center';
+    ctx.fillText('PAPER PLANE SHOOTER', canvas.width/2, titleY);
+
+    // 시작 화면 애니메이션
+    if (titleY < canvas.height/2 - 100) {
+        titleY += 5;
+    }
+    if (subtitleY > canvas.height/2 + 50) {
+        subtitleY -= 5;
+    }
+
+    // 깜빡이는 효과
+    const blinkSpeed = 500;
+    const currentTime = Date.now();
+    const isVisible = Math.floor(currentTime / blinkSpeed) % 2 === 0;
     
-    // 새로운 별 추가
-    if (Math.random() < 0.1) {
-        stars.push({
-            x: Math.random() * canvas.width,
-            y: 0,
-            speed: Math.random() * 2 + 1,
-            brightness: Math.random()
-        });
+    if (isVisible) {
+        ctx.font = 'bold 40px Arial';
+        ctx.fillStyle = '#ffff00';
+        ctx.fillText('Press SPACE to Start', canvas.width/2, subtitleY);
     }
+
+    // 조작법 안내
+    ctx.font = '20px Arial';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'left';
+    ctx.fillText('Controls:', 50, canvas.height - 200);  // 150에서 200으로 변경
+    ctx.fillText('↑↓←→ : Move', 50, canvas.height - 170);  // 120에서 170으로 변경
+    ctx.fillText('SPACE : Shoot', 50, canvas.height - 140);  // 90에서 140으로 변경
+    ctx.fillText('B : Special Weapon', 50, canvas.height - 110);  // V를 B로 변경
+    ctx.fillText('P : Pause', 50, canvas.height - 80);  // 30에서 80으로 변경
 }
 
 
@@ -4431,416 +4475,6 @@ function checkLevelUp() {
     }
 }
 
-
-// 레벨업 체크 함수 수정
-function checkLevelUp() {
-    if (levelScore >= levelUpScore) {
-        gameLevel++;
-        levelScore = 0;
-        levelUpScore = 3000 * gameLevel; // 레벨이 올라갈수록 다음 레벨까지 필요한 점수 증가
-        
-        // 현재 난이도 설정 가져오기
-        const currentDifficulty = difficultySettings[Math.min(gameLevel, 5)] || {
-            enemySpeed: 6 + (gameLevel - 5) * 0.5,
-            enemySpawnRate: 0.06 + (gameLevel - 5) * 0.01,
-            horizontalSpeedRange: 6 + (gameLevel - 5) * 0.5,
-            patternChance: 1.0,
-            maxEnemies: 20 + (gameLevel - 5) * 2,
-            bossHealth: 2000 + (gameLevel - 5) * 500,
-            bossSpawnInterval: 10000, // 10초로 고정
-            powerUpChance: 0.3,
-            bombDropChance: 0.3,
-            dynamiteDropChance: 0.25
-        };
-        
-        // 난이도 설정 적용
-        enemySpeed = currentDifficulty.enemySpeed;
-        enemySpawnRate = currentDifficulty.enemySpawnRate;
-        horizontalSpeedRange = currentDifficulty.horizontalSpeedRange;
-        patternChance = currentDifficulty.patternChance;
-        maxEnemies = currentDifficulty.maxEnemies;
-        bossHealth = currentDifficulty.bossHealth;
-        bossSpawnInterval = currentDifficulty.bossSpawnInterval;
-        powerUpChance = currentDifficulty.powerUpChance;
-        bombDropChance = currentDifficulty.bombDropChance;
-        dynamiteDropChance = currentDifficulty.dynamiteDropChance;
-        
-        // 레벨업 효과
-        showLevelUpEffect();
-        
-        // 레벨업 사운드 재생
-        if (levelUpSound) {
-            levelUpSound.play();
-        }
-        
-        // 레벨업 메시지 표시
-        showMessage(`레벨 ${gameLevel} 달성!`, 2000);
-        
-        // 레벨업 시 특별 효과
-        if (gameLevel % 5 === 0) {
-            // 5레벨마다 특별 효과
-            showMessage(`특별 레벨 ${gameLevel}!`, 3000);
-            // 특별 효과 사운드 재생
-            if (specialLevelSound) {
-                specialLevelSound.play();
-            }
-        }
-    }
-}
-
-
-// 레벨업 체크 함수 수정
-function checkLevelUp() {
-    if (levelScore >= levelUpScore) {
-        gameLevel++;
-        levelScore = 0;
-        levelUpScore = 3000 * gameLevel; // 레벨이 올라갈수록 다음 레벨까지 필요한 점수 증가
-        
-        // 현재 난이도 설정 가져오기
-        const currentDifficulty = difficultySettings[Math.min(gameLevel, 5)] || {
-            enemySpeed: 6 + (gameLevel - 5) * 0.5,
-            enemySpawnRate: 0.06 + (gameLevel - 5) * 0.01,
-            horizontalSpeedRange: 6 + (gameLevel - 5) * 0.5,
-            patternChance: 1.0,
-            maxEnemies: 20 + (gameLevel - 5) * 2,
-            bossHealth: 2000 + (gameLevel - 5) * 500,
-            bossSpawnInterval: 10000, // 10초로 고정
-            powerUpChance: 0.3,
-            bombDropChance: 0.3,
-            dynamiteDropChance: 0.25
-        };
-        
-        // 난이도 설정 적용
-        enemySpeed = currentDifficulty.enemySpeed;
-        enemySpawnRate = currentDifficulty.enemySpawnRate;
-        horizontalSpeedRange = currentDifficulty.horizontalSpeedRange;
-        patternChance = currentDifficulty.patternChance;
-        maxEnemies = currentDifficulty.maxEnemies;
-        bossHealth = currentDifficulty.bossHealth;
-        bossSpawnInterval = currentDifficulty.bossSpawnInterval;
-        powerUpChance = currentDifficulty.powerUpChance;
-        bombDropChance = currentDifficulty.bombDropChance;
-        dynamiteDropChance = currentDifficulty.dynamiteDropChance;
-        
-        // 레벨업 효과
-        showLevelUpEffect();
-        
-        // 레벨업 사운드 재생
-        if (levelUpSound) {
-            levelUpSound.play();
-        }
-        
-        // 레벨업 메시지 표시
-        showMessage(`레벨 ${gameLevel} 달성!`, 2000);
-        
-        // 레벨업 시 특별 효과
-        if (gameLevel % 5 === 0) {
-            // 5레벨마다 특별 효과
-            showMessage(`특별 레벨 ${gameLevel}!`, 3000);
-            // 특별 효과 사운드 재생
-            if (specialLevelSound) {
-                specialLevelSound.play();
-            }
-        }
-    }
-}
-
-    
-// 레벨업 체크 함수 수정
-function checkLevelUp() {
-    if (levelScore >= levelUpScore) {
-        gameLevel++;
-        levelScore = 0;
-        levelUpScore = 3000 * gameLevel; // 레벨이 올라갈수록 다음 레벨까지 필요한 점수 증가
-        
-        // 현재 난이도 설정 가져오기
-        const currentDifficulty = difficultySettings[Math.min(gameLevel, 5)] || {
-            enemySpeed: 6 + (gameLevel - 5) * 0.5,
-            enemySpawnRate: 0.06 + (gameLevel - 5) * 0.01,
-            horizontalSpeedRange: 6 + (gameLevel - 5) * 0.5,
-            patternChance: 1.0,
-            maxEnemies: 20 + (gameLevel - 5) * 2,
-            bossHealth: 2000 + (gameLevel - 5) * 500,
-            bossSpawnInterval: 10000, // 10초로 고정
-            powerUpChance: 0.3,
-            bombDropChance: 0.3,
-            dynamiteDropChance: 0.25
-        };
-        
-        // 난이도 설정 적용
-        enemySpeed = currentDifficulty.enemySpeed;
-        enemySpawnRate = currentDifficulty.enemySpawnRate;
-        horizontalSpeedRange = currentDifficulty.horizontalSpeedRange;
-        patternChance = currentDifficulty.patternChance;
-        maxEnemies = currentDifficulty.maxEnemies;
-        bossHealth = currentDifficulty.bossHealth;
-        bossSpawnInterval = currentDifficulty.bossSpawnInterval;
-        powerUpChance = currentDifficulty.powerUpChance;
-        bombDropChance = currentDifficulty.bombDropChance;
-        dynamiteDropChance = currentDifficulty.dynamiteDropChance;
-        
-        // 레벨업 효과
-        showLevelUpEffect();
-        
-        // 레벨업 사운드 재생
-        if (levelUpSound) {
-            levelUpSound.play();
-        }
-        
-        // 레벨업 메시지 표시
-        showMessage(`레벨 ${gameLevel} 달성!`, 2000);
-        
-        // 레벨업 시 특별 효과
-        if (gameLevel % 5 === 0) {
-            // 5레벨마다 특별 효과
-            showMessage(`특별 레벨 ${gameLevel}!`, 3000);
-            // 특별 효과 사운드 재생
-            if (specialLevelSound) {
-                specialLevelSound.play();
-            }
-        }
-    }
-}
-
-
-// 레벨업 체크 함수 수정
-function checkLevelUp() {
-    if (levelScore >= levelUpScore) {
-        gameLevel++;
-        levelScore = 0;
-        levelUpScore = 3000 * gameLevel; // 레벨이 올라갈수록 다음 레벨까지 필요한 점수 증가
-        
-        // 현재 난이도 설정 가져오기
-        const currentDifficulty = difficultySettings[Math.min(gameLevel, 5)] || {
-            enemySpeed: 6 + (gameLevel - 5) * 0.5,
-            enemySpawnRate: 0.06 + (gameLevel - 5) * 0.01,
-            horizontalSpeedRange: 6 + (gameLevel - 5) * 0.5,
-            patternChance: 1.0,
-            maxEnemies: 20 + (gameLevel - 5) * 2,
-            bossHealth: 2000 + (gameLevel - 5) * 500,
-            bossSpawnInterval: 10000, // 10초로 고정
-            powerUpChance: 0.3,
-            bombDropChance: 0.3,
-            dynamiteDropChance: 0.25
-        };
-        
-        // 난이도 설정 적용
-        enemySpeed = currentDifficulty.enemySpeed;
-        enemySpawnRate = currentDifficulty.enemySpawnRate;
-        horizontalSpeedRange = currentDifficulty.horizontalSpeedRange;
-        patternChance = currentDifficulty.patternChance;
-        maxEnemies = currentDifficulty.maxEnemies;
-        bossHealth = currentDifficulty.bossHealth;
-        bossSpawnInterval = currentDifficulty.bossSpawnInterval;
-        powerUpChance = currentDifficulty.powerUpChance;
-        bombDropChance = currentDifficulty.bombDropChance;
-        dynamiteDropChance = currentDifficulty.dynamiteDropChance;
-        
-        // 레벨업 효과
-        showLevelUpEffect();
-        
-        // 레벨업 사운드 재생
-        if (levelUpSound) {
-            levelUpSound.play();
-        }
-        
-        // 레벨업 메시지 표시
-        showMessage(`레벨 ${gameLevel} 달성!`, 2000);
-        
-        // 레벨업 시 특별 효과
-        if (gameLevel % 5 === 0) {
-            // 5레벨마다 특별 효과
-            showMessage(`특별 레벨 ${gameLevel}!`, 3000);
-            // 특별 효과 사운드 재생
-            if (specialLevelSound) {
-                specialLevelSound.play();
-            }
-        }
-    }
-}
-
-
-// 레벨업 체크 함수 수정
-function checkLevelUp() {
-    if (levelScore >= levelUpScore) {
-        gameLevel++;
-        levelScore = 0;
-        levelUpScore = 3000 * gameLevel; // 레벨이 올라갈수록 다음 레벨까지 필요한 점수 증가
-        
-        // 현재 난이도 설정 가져오기
-        const currentDifficulty = difficultySettings[Math.min(gameLevel, 5)] || {
-            enemySpeed: 6 + (gameLevel - 5) * 0.5,
-            enemySpawnRate: 0.06 + (gameLevel - 5) * 0.01,
-            horizontalSpeedRange: 6 + (gameLevel - 5) * 0.5,
-            patternChance: 1.0,
-            maxEnemies: 20 + (gameLevel - 5) * 2,
-            bossHealth: 2000 + (gameLevel - 5) * 500,
-            bossSpawnInterval: 10000, // 10초로 고정
-            powerUpChance: 0.3,
-            bombDropChance: 0.3,
-            dynamiteDropChance: 0.25
-        };
-        
-        // 난이도 설정 적용
-        enemySpeed = currentDifficulty.enemySpeed;
-        enemySpawnRate = currentDifficulty.enemySpawnRate;
-        horizontalSpeedRange = currentDifficulty.horizontalSpeedRange;
-        patternChance = currentDifficulty.patternChance;
-        maxEnemies = currentDifficulty.maxEnemies;
-        bossHealth = currentDifficulty.bossHealth;
-        bossSpawnInterval = currentDifficulty.bossSpawnInterval;
-        powerUpChance = currentDifficulty.powerUpChance;
-        bombDropChance = currentDifficulty.bombDropChance;
-        dynamiteDropChance = currentDifficulty.dynamiteDropChance;
-        
-        // 레벨업 효과
-        showLevelUpEffect();
-        
-        // 레벨업 사운드 재생
-        if (levelUpSound) {
-            levelUpSound.play();
-        }
-        
-        // 레벨업 메시지 표시
-        showMessage(`레벨 ${gameLevel} 달성!`, 2000);
-        
-        // 레벨업 시 특별 효과
-        if (gameLevel % 5 === 0) {
-            // 5레벨마다 특별 효과
-            showMessage(`특별 레벨 ${gameLevel}!`, 3000);
-            // 특별 효과 사운드 재생
-            if (specialLevelSound) {
-                specialLevelSound.play();
-            }
-        }
-    }
-}
-
-// 레벨업 체크 함수 수정
-function checkLevelUp() {
-    if (levelScore >= levelUpScore) {
-        gameLevel++;
-        levelScore = 0;
-        levelUpScore = 3000 * gameLevel; // 레벨이 올라갈수록 다음 레벨까지 필요한 점수 증가
-        
-        // 현재 난이도 설정 가져오기
-        const currentDifficulty = difficultySettings[Math.min(gameLevel, 5)] || {
-            enemySpeed: 6 + (gameLevel - 5) * 0.5,
-            enemySpawnRate: 0.06 + (gameLevel - 5) * 0.01,
-            horizontalSpeedRange: 6 + (gameLevel - 5) * 0.5,
-            patternChance: 1.0,
-            maxEnemies: 20 + (gameLevel - 5) * 2,
-            bossHealth: 2000 + (gameLevel - 5) * 500,
-            bossSpawnInterval: 10000, // 10초로 고정
-            powerUpChance: 0.3,
-            bombDropChance: 0.3,
-            dynamiteDropChance: 0.25
-        };
-        
-        // 난이도 설정 적용
-        enemySpeed = currentDifficulty.enemySpeed;
-        enemySpawnRate = currentDifficulty.enemySpawnRate;
-        horizontalSpeedRange = currentDifficulty.horizontalSpeedRange;
-        patternChance = currentDifficulty.patternChance;
-        maxEnemies = currentDifficulty.maxEnemies;
-        bossHealth = currentDifficulty.bossHealth;
-        bossSpawnInterval = currentDifficulty.bossSpawnInterval;
-        powerUpChance = currentDifficulty.powerUpChance;
-        bombDropChance = currentDifficulty.bombDropChance;
-        dynamiteDropChance = currentDifficulty.dynamiteDropChance;
-        
-        // 레벨업 효과
-        showLevelUpEffect();
-        
-        // 레벨업 사운드 재생
-        if (levelUpSound) {
-            levelUpSound.play();
-        }
-        
-        // 레벨업 메시지 표시
-        showMessage(`레벨 ${gameLevel} 달성!`, 2000);
-        
-        // 레벨업 시 특별 효과
-        if (gameLevel % 5 === 0) {
-            // 5레벨마다 특별 효과
-            showMessage(`특별 레벨 ${gameLevel}!`, 3000);
-            // 특별 효과 사운드 재생
-            if (specialLevelSound) {
-                specialLevelSound.play();
-            }
-        }
-    }
-}
-
-// 레벨업 체크 함수 수정
-function checkLevelUp() {
-    if (levelScore >= levelUpScore) {
-        gameLevel++;
-        levelScore = 0;
-        levelUpScore = 3000 * gameLevel; // 레벨이 올라갈수록 다음 레벨까지 필요한 점수 증가
-        
-        // 현재 난이도 설정 가져오기
-        const currentDifficulty = difficultySettings[Math.min(gameLevel, 5)] || {
-            enemySpeed: 6 + (gameLevel - 5) * 0.5,
-            enemySpawnRate: 0.06 + (gameLevel - 5) * 0.01,
-            horizontalSpeedRange: 6 + (gameLevel - 5) * 0.5,
-            patternChance: 1.0,
-            maxEnemies: 20 + (gameLevel - 5) * 2,
-            bossHealth: 2000 + (gameLevel - 5) * 500,
-            bossSpawnInterval: 10000, // 10초로 고정
-            powerUpChance: 0.3,
-            bombDropChance: 0.3,
-            dynamiteDropChance: 0.25
-        };
-        
-        // 보스 설정 업데이트
-        BOSS_SETTINGS.HEALTH = currentDifficulty.bossHealth;
-        BOSS_SETTINGS.SPAWN_INTERVAL = currentDifficulty.bossSpawnInterval;
-        
-        // 레벨업 메시지 표시
-        ctx.fillStyle = 'yellow';
-        ctx.font = '40px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(`Level ${gameLevel}!`, canvas.width/2, canvas.height/2 + 100);  // +100 추가
-        ctx.font = '20px Arial';
-        ctx.fillText(`난이도: ${getDifficultyName(gameLevel)}`, canvas.width/2, canvas.height/2 + 140);  // 40에서 140으로 변경
-        
-        // 레벨업 보상
-        if (gameLevel > 1) {
-            // 레벨업 시 보상 지급
-            const rewards = {
-                2: { type: 'shield', duration: 15000 }, // 15초 실드
-                3: { type: 'doubleDamage', duration: 20000 }, // 20초 데미지 2배
-                4: { type: 'rapidFire', duration: 25000 }, // 25초 연사 속도 증가
-                5: { type: 'all', duration: 30000 } // 30초 모든 파워업
-            };
-            
-            const reward = rewards[gameLevel] || { type: 'all', duration: 30000 + (gameLevel - 5) * 5000 };
-            if (reward) {
-                if (reward.type === 'all') {
-                    // 모든 파워업 적용
-                    hasShield = true;
-                    damageMultiplier = 2;
-                    fireRateMultiplier = 2;
-                    
-                    // 파워업 지속 시간 설정
-                    setTimeout(() => {
-                        hasShield = false;
-                        damageMultiplier = 1;
-                        fireRateMultiplier = 1;
-                    }, reward.duration);
-                } else {
-                    // 개별 파워업 적용
-                    applyPowerUp(reward.type);
-                }
-                
-                // 보상 메시지 표시
-                ctx.fillStyle = '#00ff00';
-                ctx.fillText(`보상: ${getRewardName(reward.type)}`, canvas.width/2, canvas.height/2 + 170);  // 70에서 170으로 변경
-            }
-        }
-    }
-}
 
 // 보상 이름 반환 함수 추가
 function getRewardName(type) {
@@ -5048,82 +4682,6 @@ function initStartScreen() {
             brightness: Math.random()
         });
     }
-}
-
-// 시작 화면 그리기 함수
-function drawStartScreen() {
-    // canvas가 초기화되었는지 확인
-    if (!canvas || !ctx) {
-        console.warn('Canvas가 아직 초기화되지 않았습니다. drawStartScreen을 건너뜁니다.');
-        return;
-    }
-    
-    // 배경 그라데이션
-    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, '#000033');
-    gradient.addColorStop(1, '#000066');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // 별들 그리기
-    stars.forEach(star => {
-        star.y += star.speed;
-        if (star.y > canvas.height) {
-            star.y = 0;
-            star.x = Math.random() * canvas.width;
-        }
-        ctx.fillStyle = `rgba(255, 255, 255, ${star.brightness})`;
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fill();
-    });
-
-    // 제목 그라데이션
-    const titleGradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
-    titleGradient.addColorStop(0, '#ff0000');
-    titleGradient.addColorStop(0.5, '#ffff00');
-    titleGradient.addColorStop(1, '#ff0000');
-
-    // 제목 그림자
-    ctx.shadowColor = 'rgba(255, 0, 0, 0.5)';
-    ctx.shadowBlur = 20;
-    ctx.shadowOffsetX = 5;
-    ctx.shadowOffsetY = 5;
-
-    // 제목
-    ctx.font = 'bold 50px Arial';
-    ctx.fillStyle = titleGradient;
-    ctx.textAlign = 'center';
-    ctx.fillText('PAPER PLANE SHOOTER', canvas.width/2, titleY);
-
-    // 시작 화면 애니메이션
-    if (titleY < canvas.height/2 - 100) {
-        titleY += 5;
-    }
-    if (subtitleY > canvas.height/2 + 50) {
-        subtitleY -= 5;
-    }
-
-    // 깜빡이는 효과
-    const blinkSpeed = 500;
-    const currentTime = Date.now();
-    const isVisible = Math.floor(currentTime / blinkSpeed) % 2 === 0;
-    
-    if (isVisible) {
-        ctx.font = 'bold 40px Arial';
-        ctx.fillStyle = '#ffff00';
-        ctx.fillText('Press SPACE to Start', canvas.width/2, subtitleY);
-    }
-
-    // 조작법 안내
-    ctx.font = '20px Arial';
-    ctx.fillStyle = '#ffffff';
-    ctx.textAlign = 'left';
-    ctx.fillText('Controls:', 50, canvas.height - 200);  // 150에서 200으로 변경
-    ctx.fillText('↑↓←→ : Move', 50, canvas.height - 170);  // 120에서 170으로 변경
-    ctx.fillText('SPACE : Shoot', 50, canvas.height - 140);  // 90에서 140으로 변경
-    ctx.fillText('B : Special Weapon', 50, canvas.height - 110);  // V를 B로 변경
-    ctx.fillText('P : Pause', 50, canvas.height - 80);  // 30에서 80으로 변경
 }
 
 // 폭탄 생성 함수 추가
@@ -5712,6 +5270,7 @@ function createShieldedEnemy() {
         lastShot: 0,
         shotInterval: 3000,
         type: 'shielded',
+        destroyed: false,  // 파괴 상태 플래그
         
         // 동적 움직임 패턴 관련 속성
         pattern: selectedPattern,
