@@ -43,7 +43,6 @@
             opacity: 0.8;
         }
         #soundPanel .controls {
-            -webkit-app-region: no-drag;
             cursor: default;
             display: flex;
             align-items: center;
@@ -84,10 +83,7 @@
         </div>
     </div>
     
-    <!-- 오디오 요소 추가 -->
-    <audio id="shootSound" src="sounds/shoot.mp3" preload="auto"></audio>
-    <audio id="explosionSound" src="sounds/explosion.mp3" preload="auto"></audio>
-    <audio id="collisionSound" src="sounds/collision.mp3" preload="auto"></audio>
+    <!-- 오디오 요소는 JavaScript에서 동적으로 생성됩니다 -->
     
     <script>
         // 사운드 패널 드래그 기능
