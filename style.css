@@ -1,0 +1,31 @@
+html, body {
+  width: 100vw;
+  height: 100vh;
+  background: #E0E0E0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+body {
+  margin: 0;
+  padding: 0;
+  background: #E0E0E0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+#canvas-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px; /* 캔버스와 효과음 패널 사이 간격 */
+}
+#gameCanvas {
+  display: block;
+  margin: auto;
+  background: #000;
+  border-radius: 0;
+}
