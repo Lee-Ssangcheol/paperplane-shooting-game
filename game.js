@@ -43,7 +43,7 @@ class GameSoundManager {
         this.audioContext = null;
         this.audioBuffers = {};  // Web Audio API용 오디오 버퍼
         this.initialized = false;
-        this.volume = 0.5;  // 기본 볼륨 (썬더볼터용과 동일)
+        this.volume = 1.0;  // 기본 볼륨 (최대 볼륨)
         this.enabled = true;
         this.lastCollisionTime = 0;
         this.collisionSoundCooldown = 300;
@@ -426,7 +426,7 @@ class GameSoundManager {
 const soundManager = new GameSoundManager();
 
 // 전역 볼륨 변수
-let globalVolume = 0.1;  // 전역 볼륨 (10%)
+let globalVolume = 0.5;  // 전역 볼륨 (50%)
 let isMuted = false;
 
 // 웹용 사운드 초기화 함수
@@ -2116,12 +2116,11 @@ function getRandomPatternType() {
 
 // 충돌 감지 함수 수정
 function checkCollision(rect1, rect2) {
-    // 충돌 영역을 더 정확하게 계산
-    const margin = 2;  // 충돌 마진을 줄임
-    return rect1.x + margin < rect2.x + rect2.width - margin &&
-           rect1.x + rect1.width - margin > rect2.x + margin &&
-           rect1.y + margin < rect2.y + rect2.height - margin &&
-           rect1.y + rect1.height - margin > rect2.y + margin;
+    // 충돌 영역을 더 정확하게 계산 - 마진 제거로 정확한 충돌 감지
+    return rect1.x < rect2.x + rect2.width &&
+           rect1.x + rect1.width > rect2.x &&
+           rect1.y < rect2.y + rect2.height &&
+           rect1.y + rect1.height > rect2.y;
 }
 
 // 충돌 처리 함수 수정
@@ -3998,10 +3997,7 @@ function handleBullets() {
                 // 체력 감소
                 enemy.health--;
                 
-                // 플레이어 피격 시 경고 효과음 재생
-                safePlaySound('warning');
-                
-                // 피격 효과
+                // 피격 효과 (경고음 제거 - 방어막 적 공격은 플레이어 피격이 아님)
                 explosions.push(new Explosion(bullet.x, bullet.y, false));
                 
                 // 방어막이 비활성화된 경우 또는 체력이 0인 경우
@@ -6011,13 +6007,13 @@ function setupSoundControlEvents() {
     const volumeValue = document.getElementById('volume-value');
     
     if (sfxVolumeSlider && volumeValue) {
-        // 초기 볼륨 설정 - 10%로 고정
+        // 초기 볼륨 설정 - 슬라이더는 10%로 표시하지만 실제 전역 볼륨은 50%로 설정
         const initialVolume = 10;
         sfxVolumeSlider.value = initialVolume;
         volumeValue.textContent = `${initialVolume}%`;
         
-        // 전역 볼륨 변수 업데이트
-        globalVolume = initialVolume / 100;
+        // 전역 볼륨 변수 업데이트 - 실제로는 50% 볼륨으로 설정
+        globalVolume = 0.5;
         
         sfxVolumeSlider.addEventListener('input', function(e) {
             e.stopPropagation();  // 이벤트 전파 중단
