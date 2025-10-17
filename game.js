@@ -495,7 +495,7 @@ const player = {
     y: 0,  // 임시로 0으로 설정
     width: 58,
     height: 58,
-    speed: 5.0 // 균형잡힌 플레이어 속도
+    speed: 3.6 // 균형잡힌 플레이어 속도 (추가 20% 감소: 4.5 → 3.6)
 };
 
 // 두 번째 비행기
@@ -504,7 +504,7 @@ const secondPlane = {
     y: 0,  // 임시로 0으로 설정
     width: 58,
     height: 58,
-    speed: 5.0 // 균형잡힌 플레이어 속도
+    speed: 3.6 // 균형잡힌 플레이어 속도 (추가 20% 감소: 4.5 → 3.6)
 };
 
 // 게임 상태 변수 설정
@@ -952,9 +952,9 @@ const keys = {
 // 난이도 설정
 const difficultySettings = {
     1: { // 초급
-        enemySpeed: 0.64,
+        enemySpeed: 0.461, // 추가 20% 감소: 0.576 → 0.461
         enemySpawnRate: 0.0064,
-        horizontalSpeedRange: 0.64,
+        horizontalSpeedRange: 0.461, // 추가 20% 감소: 0.576 → 0.461
         patternChance: 0.2,
         maxEnemies: 5,
         bossHealth: 3000,
@@ -964,9 +964,9 @@ const difficultySettings = {
         dynamiteDropChance: 0.05
     },
     2: { // 중급
-        enemySpeed: 0.96,
+        enemySpeed: 0.691, // 추가 20% 감소: 0.864 → 0.691
         enemySpawnRate: 0.0096,
-        horizontalSpeedRange: 0.96,
+        horizontalSpeedRange: 0.691, // 추가 20% 감소: 0.864 → 0.691
         patternChance: 0.4,
         maxEnemies: 8,
         bossHealth: 3000,
@@ -976,9 +976,9 @@ const difficultySettings = {
         dynamiteDropChance: 0.1
     },
     3: { // 고급
-        enemySpeed: 1.28,
+        enemySpeed: 0.922, // 추가 20% 감소: 1.152 → 0.922
         enemySpawnRate: 0.0128,
-        horizontalSpeedRange: 1.28,
+        horizontalSpeedRange: 0.922, // 추가 20% 감소: 1.152 → 0.922
         patternChance: 0.6,
         maxEnemies: 12,
         bossHealth: 3000,
@@ -988,9 +988,9 @@ const difficultySettings = {
         dynamiteDropChance: 0.15
     },
     4: { // 전문가
-        enemySpeed: 1.6,
+        enemySpeed: 1.152, // 추가 20% 감소: 1.44 → 1.152
         enemySpawnRate: 0.016,
-        horizontalSpeedRange: 1.6,
+        horizontalSpeedRange: 1.152, // 추가 20% 감소: 1.44 → 1.152
         patternChance: 0.8,
         maxEnemies: 15,
         bossHealth: 3000,
@@ -1000,9 +1000,9 @@ const difficultySettings = {
         dynamiteDropChance: 0.2
     },
     5: { // 마스터
-        enemySpeed: 1.92,
+        enemySpeed: 1.382, // 추가 20% 감소: 1.728 → 1.382
         enemySpawnRate: 0.0192,
-        horizontalSpeedRange: 1.92,
+        horizontalSpeedRange: 1.382, // 추가 20% 감소: 1.728 → 1.382
         patternChance: 1.0,
         maxEnemies: 20,
         bossHealth: 3000,
@@ -1527,7 +1527,7 @@ async function initializeGame() {
         spacePressTime = 0;
         fireDelay = 500;
         continuousFireDelay = 50;
-        bulletSpeed = 7.5; // 균형잡힌 총알 속도
+        bulletSpeed = 5.4; // 균형잡힌 총알 속도 (추가 20% 감소: 6.75 → 5.4)
         baseBulletSize = 4.5;
         isContinuousFire = false;
         canFire = true;
@@ -1671,7 +1671,7 @@ function restartGame() {
     spacePressTime = 0;
     fireDelay = 500;
     continuousFireDelay = 50;
-    bulletSpeed = 7;
+    bulletSpeed = 5.04; // 추가 20% 감소: 6.3 → 5.04
     baseBulletSize = 4.5;
     isContinuousFire = false;
     canFire = true;
@@ -1724,9 +1724,9 @@ function restartGame() {
 // 적 생성 함수 수정
 function createEnemy() {
     const currentDifficulty = difficultySettings[Math.min(gameLevel, 5)] || {
-        enemySpeed: 6 + (gameLevel - 5) * 0.5,
+        enemySpeed: 4.32 + (gameLevel - 5) * 0.36, // 추가 20% 감소: 5.4 → 4.32, 0.45 → 0.36
         enemySpawnRate: 0.06 + (gameLevel - 5) * 0.01,
-        horizontalSpeedRange: 6 + (gameLevel - 5) * 0.5,
+        horizontalSpeedRange: 4.32 + (gameLevel - 5) * 0.36, // 추가 20% 감소: 5.4 → 4.32, 0.45 → 0.36
         patternChance: 1.0,
         maxEnemies: 20 + (gameLevel - 5) * 2,
         bossHealth: 2000 + (gameLevel - 5) * 500,
@@ -2641,9 +2641,9 @@ function handlePlayerMovement() {
 function handleEnemies() {
     const currentTime = Date.now();
     const currentDifficulty = difficultySettings[Math.min(gameLevel, 5)] || {
-        enemySpeed: 6 + (gameLevel - 5) * 0.5,
+        enemySpeed: 4.32 + (gameLevel - 5) * 0.36, // 추가 20% 감소: 5.4 → 4.32, 0.45 → 0.36
         enemySpawnRate: 0.06 + (gameLevel - 5) * 0.01,
-        horizontalSpeedRange: 6 + (gameLevel - 5) * 0.5,
+        horizontalSpeedRange: 4.32 + (gameLevel - 5) * 0.36, // 추가 20% 감소: 5.4 → 4.32, 0.45 → 0.36
         patternChance: 1.0,
         maxEnemies: 20 + (gameLevel - 5) * 2,
         bossHealth: 2000 + (gameLevel - 5) * 500,
@@ -3338,9 +3338,9 @@ function drawUI() {
     
     // 현재 난이도 설정 가져오기
     const currentDifficulty = difficultySettings[Math.min(gameLevel, 5)] || {
-        enemySpeed: 6 + (gameLevel - 5) * 0.5,
+        enemySpeed: 4.32 + (gameLevel - 5) * 0.36, // 추가 20% 감소: 5.4 → 4.32, 0.45 → 0.36
         enemySpawnRate: 0.06 + (gameLevel - 5) * 0.01,
-        horizontalSpeedRange: 6 + (gameLevel - 5) * 0.5,
+        horizontalSpeedRange: 4.32 + (gameLevel - 5) * 0.36, // 추가 20% 감소: 5.4 → 4.32, 0.45 → 0.36
         patternChance: 1.0,
         maxEnemies: 20 + (gameLevel - 5) * 2,
         bossHealth: 2000 + (gameLevel - 5) * 500,
@@ -4060,16 +4060,16 @@ function handleBullets() {
 const BOSS_SETTINGS = {
     HEALTH: 3000,        // 기본 체력 (30발 피격으로 파괴)
     DAMAGE: 50,          // 보스 총알 데미지
-    SPEED: 0.8,          // 보스 이동 속도 (20% 더 느리게)
-    BULLET_SPEED: 2.0,   // 보스 총알 속도 (20% 더 느리게)
+    SPEED: 0.576,        // 보스 이동 속도 (추가 20% 감소: 0.72 → 0.576)
+    BULLET_SPEED: 1.44,  // 보스 총알 속도 (추가 20% 감소: 1.8 → 1.44)
     PATTERN_INTERVAL: 2000, // 패턴 변경 간격
     SPAWN_INTERVAL: 30000,  // 보스 출현 간격 (30초)
     TIME_LIMIT: 25000,  // 보스 시간 제한 (25초)
     BONUS_SCORE: 500,    // 보스 처치 보너스 점수를 500으로 설정
-    PHASE_THRESHOLDS: [  // 페이즈 전환 체력 임계값
-        { health: 2250, speed: 0.96, bulletSpeed: 2.4 },
-        { health: 1500, speed: 1.2, bulletSpeed: 2.8 },
-        { health: 750, speed: 1.44, bulletSpeed: 3.2 }
+    PHASE_THRESHOLDS: [  // 페이즈 전환 체력 임계값 (추가 20% 감소)
+        { health: 2250, speed: 0.691, bulletSpeed: 1.728 },
+        { health: 1500, speed: 0.864, bulletSpeed: 2.016 },
+        { health: 750, speed: 1.037, bulletSpeed: 2.304 }
     ]
 };
 
@@ -4640,12 +4640,36 @@ function createBossBullet(boss, angle, pattern = null) {
         bulletPattern = boss.pattern; // 기본 패턴 사용
     }
     
+    // 확산탄 패턴들 정의
+    const spreadPatterns = [
+        BOSS_PATTERNS.SNOWFLAKE_SHOT,
+        BOSS_PATTERNS.PINWHEEL_SHOT,
+        BOSS_PATTERNS.TRIANGLE_SHOT,
+        BOSS_PATTERNS.RECTANGLE_SHOT,
+        BOSS_PATTERNS.PENTAGON_SHOT,
+        BOSS_PATTERNS.HEXAGON_SHOT,
+        BOSS_PATTERNS.OCTAGON_SHOT,
+        BOSS_PATTERNS.CIRCLE_SHOT,
+        BOSS_PATTERNS.CROSS_SHOT,
+        BOSS_PATTERNS.HEART_SHOT,
+        BOSS_PATTERNS.STAR_SHOT,
+        BOSS_PATTERNS.FLOWER_SHOT,
+        BOSS_PATTERNS.GEAR_SHOT,
+        BOSS_PATTERNS.MOON_SHOT
+    ];
+    
+    // 확산탄 패턴인지 확인하고 속도 조정
+    let bulletSpeed = boss.bulletSpeed;
+    if (spreadPatterns.includes(bulletPattern)) {
+        bulletSpeed = boss.bulletSpeed * 1.2; // 확산탄 패턴은 20% 빠르게
+    }
+    
     const bullet = {
         x: boss.x + boss.width/2,
         y: boss.y + boss.height/2,
         width: 24,  // 보스 총알 크기 24x24 (스페이스용과 동일)
         height: 24, // 보스 총알 크기 24x24 (스페이스용과 동일)
-        speed: boss.bulletSpeed,
+        speed: bulletSpeed,
         angle: angle,
         isBossBullet: true,
         damage: BOSS_SETTINGS.DAMAGE,
@@ -4959,7 +4983,7 @@ let isSpacePressed = false;  // 스페이스바 누름 상태
 let spacePressTime = 0;  // 스페이스바를 처음 누른 시간
 let fireDelay = 500;  // 첫 발사 딜레이
 let continuousFireDelay = 50;  // 연속 발사 간격
-let bulletSpeed = 7.5;  // 균형잡힌 총알 속도
+let bulletSpeed = 5.4;  // 균형잡힌 총알 속도 (추가 20% 감소: 6.75 → 5.4)
 let baseBulletSize = 4.5;  // 총알 크기
 let isContinuousFire = false;  // 연속 발사 상태
 let canFire = true;  // 발사 가능 상태 추가
