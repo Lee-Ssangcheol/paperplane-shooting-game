@@ -3566,11 +3566,11 @@ window.addEventListener('load', async () => {
         const muteBtn = document.getElementById('muteBtn');
 
         // 요소가 존재하는 경우에만 초기화
-        if (effectVolume && volumeValue && muteBtn) {
+        if (effectVolume && volumeValue && muteBtn && soundManager) {
             // 볼륨 초기화
-            effectVolume.value = soundManager.volume;
-            volumeValue.textContent = Math.round(soundManager.volume * 100) + '%';
-            muteBtn.textContent = soundManager.enabled ? '🔊 전체 음소거' : '🔇 전체 음소거';
+            effectVolume.value = soundManager.volume || 1.0;
+            volumeValue.textContent = Math.round((soundManager.volume || 1.0) * 100) + '%';
+            muteBtn.textContent = (soundManager.enabled !== false) ? '🔊 전체 음소거' : '🔇 전체 음소거';
 
             // 슬라이더 조작 시
             effectVolume.addEventListener('input', (e) => {
@@ -3595,8 +3595,8 @@ window.addEventListener('load', async () => {
                 const isEnabled = soundManager.toggleMute();
                 if (isEnabled) {
                     muteBtn.textContent = '🔊 전체 음소거';
-                    effectVolume.value = soundManager.volume;
-                    volumeValue.textContent = Math.round(soundManager.volume * 100) + '%';
+                    effectVolume.value = soundManager.volume || 1.0;
+                    volumeValue.textContent = Math.round((soundManager.volume || 1.0) * 100) + '%';
                 } else {
                     muteBtn.textContent = '🔇 전체 음소거 해제';
                     effectVolume.value = 0;
