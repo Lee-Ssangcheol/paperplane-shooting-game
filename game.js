@@ -952,9 +952,9 @@ const keys = {
 // 난이도 설정
 const difficultySettings = {
     1: { // 초급
-        enemySpeed: 0.461, // 추가 20% 감소: 0.576 → 0.461
+        enemySpeed: 1.0, // 하강 속도 증가: 0.461 → 1.0
         enemySpawnRate: 0.0064,
-        horizontalSpeedRange: 0.461, // 추가 20% 감소: 0.576 → 0.461
+        horizontalSpeedRange: 0.461, // 가로 이동은 유지
         patternChance: 0.2,
         maxEnemies: 5,
         bossHealth: 3000,
@@ -964,9 +964,9 @@ const difficultySettings = {
         dynamiteDropChance: 0.05
     },
     2: { // 중급
-        enemySpeed: 0.691, // 추가 20% 감소: 0.864 → 0.691
+        enemySpeed: 1.5, // 하강 속도 증가: 0.691 → 1.5
         enemySpawnRate: 0.0096,
-        horizontalSpeedRange: 0.691, // 추가 20% 감소: 0.864 → 0.691
+        horizontalSpeedRange: 0.691, // 가로 이동은 유지
         patternChance: 0.4,
         maxEnemies: 8,
         bossHealth: 3000,
@@ -976,9 +976,9 @@ const difficultySettings = {
         dynamiteDropChance: 0.1
     },
     3: { // 고급
-        enemySpeed: 0.922, // 추가 20% 감소: 1.152 → 0.922
+        enemySpeed: 2.0, // 하강 속도 증가: 0.922 → 2.0
         enemySpawnRate: 0.0128,
-        horizontalSpeedRange: 0.922, // 추가 20% 감소: 1.152 → 0.922
+        horizontalSpeedRange: 0.922, // 가로 이동은 유지
         patternChance: 0.6,
         maxEnemies: 12,
         bossHealth: 3000,
@@ -988,9 +988,9 @@ const difficultySettings = {
         dynamiteDropChance: 0.15
     },
     4: { // 전문가
-        enemySpeed: 1.152, // 추가 20% 감소: 1.44 → 1.152
+        enemySpeed: 2.5, // 하강 속도 증가: 1.152 → 2.5
         enemySpawnRate: 0.016,
-        horizontalSpeedRange: 1.152, // 추가 20% 감소: 1.44 → 1.152
+        horizontalSpeedRange: 1.152, // 가로 이동은 유지
         patternChance: 0.8,
         maxEnemies: 15,
         bossHealth: 3000,
@@ -1000,9 +1000,9 @@ const difficultySettings = {
         dynamiteDropChance: 0.2
     },
     5: { // 마스터
-        enemySpeed: 1.382, // 추가 20% 감소: 1.728 → 1.382
+        enemySpeed: 3.0, // 하강 속도 증가: 1.382 → 3.0
         enemySpawnRate: 0.0192,
-        horizontalSpeedRange: 1.382, // 추가 20% 감소: 1.728 → 1.382
+        horizontalSpeedRange: 1.382, // 가로 이동은 유지
         patternChance: 1.0,
         maxEnemies: 20,
         bossHealth: 3000,
@@ -1503,6 +1503,7 @@ async function initializeGame() {
         bossHealth = 0;
         bossDestroyed = false;  // 보스 파괴 상태 초기화
         bossPattern = 0;
+        bossTimer = 0;  // 보스 타이머 초기화
         lastBossSpawnTime = Date.now();  // 보스 등장을 10초 후로 설정
                
         // 6. 플레이어 초기 위치 설정
@@ -1520,6 +1521,10 @@ async function initializeGame() {
         hasShield = false;
         damageMultiplier = 1;
         fireRateMultiplier = 1;
+        
+        // 플레이어 속도 초기화 (파워업 효과 제거)
+        player.speed = 3.6; // 기본 플레이어 속도로 복원
+        secondPlane.speed = 3.6; // 두 번째 비행기 속도도 복원
         
         // 9. 발사 관련 상태 초기화
         lastFireTime = 0;
@@ -1647,6 +1652,7 @@ function restartGame() {
     bossHealth = 0;
     bossDestroyed = false;
     bossPattern = 0;
+    bossTimer = 0;  // 보스 타이머 초기화
     bossStartTime = Date.now();
     
     // 8. 보스 설정 즉시 적용 (게임 재시작 시)
@@ -1661,9 +1667,14 @@ function restartGame() {
     lastSnakeGroupTime = 0;
     
     // 9. 파워업 상태 초기화
+    hasSpreadShot = false;
     hasShield = false;
     damageMultiplier = 1;
     fireRateMultiplier = 1;
+    
+    // 플레이어 속도 초기화 (파워업 효과 제거)
+    player.speed = 3.6; // 기본 플레이어 속도로 복원
+    secondPlane.speed = 3.6; // 두 번째 비행기 속도도 복원
     
     // 10. 발사 관련 상태 초기화
     lastFireTime = 0;
@@ -1724,9 +1735,9 @@ function restartGame() {
 // 적 생성 함수 수정
 function createEnemy() {
     const currentDifficulty = difficultySettings[Math.min(gameLevel, 5)] || {
-        enemySpeed: 4.32 + (gameLevel - 5) * 0.36, // 추가 20% 감소: 5.4 → 4.32, 0.45 → 0.36
+        enemySpeed: 6.0 + (gameLevel - 5) * 0.5, // 하강 속도 증가: 4.32 → 6.0
         enemySpawnRate: 0.06 + (gameLevel - 5) * 0.01,
-        horizontalSpeedRange: 4.32 + (gameLevel - 5) * 0.36, // 추가 20% 감소: 5.4 → 4.32, 0.45 → 0.36
+        horizontalSpeedRange: 4.32 + (gameLevel - 5) * 0.36, // 가로 이동은 유지
         patternChance: 1.0,
         maxEnemies: 20 + (gameLevel - 5) * 2,
         bossHealth: 2000 + (gameLevel - 5) * 500,
@@ -1823,7 +1834,7 @@ function updateEnemyPosition(enemy) {
     enemy.lastUpdateTime = currentTime;
     
     // 적군이 화면 상단에 머무르지 않도록 기본 하강 속도 추가
-    const baseSpeed = enemy.speed || 2;
+    const baseSpeed = Math.max(enemy.speed || 2, 1.5); // 최소 하강 속도 보장
     
     switch(enemy.type) {
         case ENEMY_PATTERNS.ZIGZAG:
@@ -2641,9 +2652,9 @@ function handlePlayerMovement() {
 function handleEnemies() {
     const currentTime = Date.now();
     const currentDifficulty = difficultySettings[Math.min(gameLevel, 5)] || {
-        enemySpeed: 4.32 + (gameLevel - 5) * 0.36, // 추가 20% 감소: 5.4 → 4.32, 0.45 → 0.36
+        enemySpeed: 6.0 + (gameLevel - 5) * 0.5, // 하강 속도 증가: 4.32 → 6.0
         enemySpawnRate: 0.06 + (gameLevel - 5) * 0.01,
-        horizontalSpeedRange: 4.32 + (gameLevel - 5) * 0.36, // 추가 20% 감소: 5.4 → 4.32, 0.45 → 0.36
+        horizontalSpeedRange: 4.32 + (gameLevel - 5) * 0.36, // 가로 이동은 유지
         patternChance: 1.0,
         maxEnemies: 20 + (gameLevel - 5) * 2,
         bossHealth: 2000 + (gameLevel - 5) * 500,
@@ -3338,9 +3349,9 @@ function drawUI() {
     
     // 현재 난이도 설정 가져오기
     const currentDifficulty = difficultySettings[Math.min(gameLevel, 5)] || {
-        enemySpeed: 4.32 + (gameLevel - 5) * 0.36, // 추가 20% 감소: 5.4 → 4.32, 0.45 → 0.36
+        enemySpeed: 6.0 + (gameLevel - 5) * 0.5, // 하강 속도 증가: 4.32 → 6.0
         enemySpawnRate: 0.06 + (gameLevel - 5) * 0.01,
-        horizontalSpeedRange: 4.32 + (gameLevel - 5) * 0.36, // 추가 20% 감소: 5.4 → 4.32, 0.45 → 0.36
+        horizontalSpeedRange: 4.32 + (gameLevel - 5) * 0.36, // 가로 이동은 유지
         patternChance: 1.0,
         maxEnemies: 20 + (gameLevel - 5) * 2,
         bossHealth: 2000 + (gameLevel - 5) * 500,
@@ -4076,6 +4087,7 @@ const BOSS_SETTINGS = {
 // 게임 상태 변수에 추가
 let lastBossSpawnTime = Date.now() - 0;  // 마지막 보스 출현 시간을 현재 시간으로 설정하여 10초 후 첫 등장
 let bossStartTime = Date.now();  // 보스 시작 시간
+let bossTimer = 0;  // 보스 타이머
 
 // 보스 생성 함수 수정
 function createBoss() {
