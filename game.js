@@ -3560,47 +3560,53 @@ window.addEventListener('load', async () => {
         // 게임 초기화 실행
         await initializeGame();
 
+        // 사운드 컨트롤 요소 확인 및 초기화
         const effectVolume = document.getElementById('effectVolume');
         const volumeValue = document.getElementById('volumeValue');
         const muteBtn = document.getElementById('muteBtn');
 
-        // 볼륨 초기화
-        effectVolume.value = soundManager.volume;
-        volumeValue.textContent = Math.round(soundManager.volume * 100) + '%';
-        muteBtn.textContent = soundManager.enabled ? '🔊 전체 음소거' : '🔇 전체 음소거';
+        // 요소가 존재하는 경우에만 초기화
+        if (effectVolume && volumeValue && muteBtn) {
+            // 볼륨 초기화
+            effectVolume.value = soundManager.volume;
+            volumeValue.textContent = Math.round(soundManager.volume * 100) + '%';
+            muteBtn.textContent = soundManager.enabled ? '🔊 전체 음소거' : '🔇 전체 음소거';
 
-        // 슬라이더 조작 시
-        effectVolume.addEventListener('input', (e) => {
-            const volume = parseFloat(e.target.value);
-            soundManager.setVolume(volume);
-            volumeValue.textContent = Math.round(volume * 100) + '%';
-            muteBtn.textContent = volume === 0 ? '🔇 전체 음소거' : '🔊 전체 음소거';
-        });
+            // 슬라이더 조작 시
+            effectVolume.addEventListener('input', (e) => {
+                const volume = parseFloat(e.target.value);
+                soundManager.setVolume(volume);
+                volumeValue.textContent = Math.round(volume * 100) + '%';
+                muteBtn.textContent = volume === 0 ? '🔇 전체 음소거' : '🔊 전체 음소거';
+            });
 
-        // 마우스 조작이 끝난 직후(마우스가 어디에 있든) 항상 포커스 이동
-        effectVolume.addEventListener('mouseup', () => {
-            setTimeout(() => { document.getElementById('gameCanvas').focus(); }, 0);
-        });
-        effectVolume.addEventListener('change', () => {
-            setTimeout(() => { document.getElementById('gameCanvas').focus(); }, 0);
-        });
-        effectVolume.addEventListener('blur', () => {
-            setTimeout(() => { document.getElementById('gameCanvas').focus(); }, 0);
-        });
-        // 음소거 버튼 클릭 시
-        muteBtn.addEventListener('click', () => {
-            const isEnabled = soundManager.toggleMute();
-            if (isEnabled) {
-                muteBtn.textContent = '🔊 전체 음소거';
-                effectVolume.value = soundManager.volume;
-                volumeValue.textContent = Math.round(soundManager.volume * 100) + '%';
-            } else {
-                muteBtn.textContent = '🔇 전체 음소거 해제';
-                effectVolume.value = 0;
-                volumeValue.textContent = '0%';
-            }
-            setTimeout(() => { document.getElementById('gameCanvas').focus(); }, 0);
-        });
+            // 마우스 조작이 끝난 직후(마우스가 어디에 있든) 항상 포커스 이동
+            effectVolume.addEventListener('mouseup', () => {
+                setTimeout(() => { document.getElementById('gameCanvas').focus(); }, 0);
+            });
+            effectVolume.addEventListener('change', () => {
+                setTimeout(() => { document.getElementById('gameCanvas').focus(); }, 0);
+            });
+            effectVolume.addEventListener('blur', () => {
+                setTimeout(() => { document.getElementById('gameCanvas').focus(); }, 0);
+            });
+            // 음소거 버튼 클릭 시
+            muteBtn.addEventListener('click', () => {
+                const isEnabled = soundManager.toggleMute();
+                if (isEnabled) {
+                    muteBtn.textContent = '🔊 전체 음소거';
+                    effectVolume.value = soundManager.volume;
+                    volumeValue.textContent = Math.round(soundManager.volume * 100) + '%';
+                } else {
+                    muteBtn.textContent = '🔇 전체 음소거 해제';
+                    effectVolume.value = 0;
+                    volumeValue.textContent = '0%';
+                }
+                setTimeout(() => { document.getElementById('gameCanvas').focus(); }, 0);
+            });
+        } else {
+            console.log('사운드 컨트롤 요소들이 HTML에 정의되지 않음 - 기본 사운드 컨트롤 사용');
+        }
     } catch (error) {
         console.error('게임 시작 중 오류:', error);
         // 오류 발생 시 localStorage에서 점수 로드 시도
@@ -3634,6 +3640,7 @@ document.addEventListener('keydown', (e) => {
     const isSoundPanelFocused = activeElement && (
         activeElement.id === 'effectVolume' ||
         activeElement.id === 'muteBtn' ||
+        activeElement.id === 'sfx-volume' ||
         activeElement.closest('#soundPanel')
     );
 
@@ -3717,6 +3724,7 @@ document.addEventListener('keyup', (e) => {
     const isSoundPanelFocused = activeElement && (
         activeElement.id === 'effectVolume' ||
         activeElement.id === 'muteBtn' ||
+        activeElement.id === 'sfx-volume' ||
         activeElement.closest('#soundPanel')
     );
 
