@@ -217,8 +217,9 @@ class GameSoundManager {
                 this.lastCollisionTime = now;
             }
             
-            // 볼륨 계산 (썬더볼터용과 동일한 방식)
-            const volume = options.volume !== undefined ? options.volume : this.volume;
+            // 볼륨 계산: 개별 볼륨 × 전역 볼륨
+            const individualVolume = options.volume !== undefined ? options.volume : this.volume;
+            const volume = individualVolume * globalVolume;
             
             // Web Audio API를 사용한 고품질 재생 시도
             if (this.useWebAudioAPI && this.audioContext && this.audioBuffers[soundName]) {
@@ -231,7 +232,8 @@ class GameSoundManager {
             console.error('Audio play failed:', e);
             // 재생 실패 시 HTML5 Audio로 fallback
             try {
-                const volume = options.volume !== undefined ? options.volume : this.volume;
+                const individualVolume = options.volume !== undefined ? options.volume : this.volume;
+                const volume = individualVolume * globalVolume;
                 await this.playWithHTML5Audio(soundName, volume);
             } catch (fallbackError) {
                 console.error('Fallback audio play also failed:', fallbackError);
@@ -3047,7 +3049,7 @@ function checkEnemyCollisions(enemy) {
                 bossHealth = enemy.health;
                 
                 // 보스 피격 시 shoot 사운드 재생
-                safePlaySound('shoot', { volume: 0.6 });
+                safePlaySound('shoot', { volume: 0.8 });
                 
                 // 보스가 화면 밖으로 이동 중이면 충돌 처리하지 않음
                 if (enemy.isLeaving) {
@@ -6007,12 +6009,12 @@ function setupSoundControlEvents() {
     const volumeValue = document.getElementById('volume-value');
     
     if (sfxVolumeSlider && volumeValue) {
-        // 초기 볼륨 설정 - 슬라이더는 10%로 표시하지만 실제 전역 볼륨은 50%로 설정
-        const initialVolume = 10;
+        // 초기 볼륨 설정 - 슬라이더와 전역 볼륨 모두 50%로 설정
+        const initialVolume = 50;
         sfxVolumeSlider.value = initialVolume;
         volumeValue.textContent = `${initialVolume}%`;
         
-        // 전역 볼륨 변수 업데이트 - 실제로는 50% 볼륨으로 설정
+        // 전역 볼륨 변수 업데이트 - 50% 볼륨으로 설정
         globalVolume = 0.5;
         
         sfxVolumeSlider.addEventListener('input', function(e) {
