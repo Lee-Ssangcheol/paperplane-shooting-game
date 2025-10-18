@@ -2623,15 +2623,15 @@ function gameLoop() {
 // 플레이어 이동 처리 함수
 function handlePlayerMovement() {
     if (keys.ArrowLeft && player.x > 0) {
-        player.x -= player.speed * 0.5;
+        player.x -= player.speed * 0.7;
         if (hasSecondPlane) {
-            secondPlane.x -= player.speed * 0.5;
+            secondPlane.x -= player.speed * 0.7;
         }
     }
     if (keys.ArrowRight && player.x < canvas.width - player.width) {
-        player.x += player.speed * 0.5;
+        player.x += player.speed * 0.7;
         if (hasSecondPlane) {
-            secondPlane.x += player.speed * 0.5;
+            secondPlane.x += player.speed * 0.7;
         }
     }
     if (keys.ArrowUp && player.y > 0) {
