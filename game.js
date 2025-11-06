@@ -1,8 +1,8 @@
                           // 게임 상수 정의
-const SPECIAL_WEAPON_MAX_CHARGE = 2000;  // 특수무기 최대 충전량 (2000점으로 완화)
+const SPECIAL_WEAPON_MAX_CHARGE = 4000;  // 특수무기 최대 충전량 (4000점)
 const SPECIAL_WEAPON_CHARGE_RATE = 10;   // 특수무기 충전 속도
-const SPECIAL_WEAPON_MAX_STOCK = 3;       // 특수무기 최대 보유 개수
-const SPECIAL_WEAPON_STOCK_POINTS = 1000; // 특수무기 1개 획득에 필요한 점수
+const SPECIAL_WEAPON_MAX_STOCK = 5;       // 특수무기 최대 보유 개수
+const SPECIAL_WEAPON_STOCK_POINTS = 4000; // 특수무기 1개 획득에 필요한 점수
 const TOP_EFFECT_ZONE = 20;  // 상단 효과 무시 영역 (픽셀)
 
 // 캔버스 설정
@@ -547,6 +547,7 @@ let specialWeaponCharged = false;
 let specialWeaponCharge = 0;
 let specialWeaponStock = 0;  // 특수무기 보유 개수
 let specialWeaponAccumulatedPoints = 0;  // 특수무기 누적 점수
+let nextPlaneThreshold = 4000; // 추가 비행기 다음 획득 점수
 
 // 보스 경고 시스템 변수 추가
 let bossWarning = {
@@ -1467,6 +1468,7 @@ async function initializeGame() {
         maxLives = 5;  // 최대 목숨 초기화
         hasSecondPlane = false;
         secondPlaneTimer = 0;
+        nextPlaneThreshold = 4000;
         
         // 목숨 깜빡임 효과 초기화
         isLivesBlinking = false;
@@ -1602,6 +1604,7 @@ function restartGame() {
     maxLives = 5;  // 최대 목숨 초기화
     hasSecondPlane = false;
     secondPlaneTimer = 0;
+    nextPlaneThreshold = 4000;
     
     // 목숨 깜빡임 효과 초기화
     isLivesBlinking = false;
@@ -3318,8 +3321,8 @@ function drawUI() {
     ctx.fillText(`최고 점수: ${highScore}`, 10, 120);
     ctx.fillText(`최고 점수 리셋: R키`, 10, 150);
     if (!hasSecondPlane) {
-        const nextPlaneScore = Math.ceil(score / 4000) * 4000;
-        ctx.fillText(`다음 추가 비행기까지: ${nextPlaneScore - score}점`, 10, 180);
+        const remainingToNext = Math.max(0, nextPlaneThreshold - score);
+        ctx.fillText(`다음 추가 비행기까지: ${remainingToNext}점`, 10, 180);
     } else {
         const remainingTime = Math.ceil((10000 - (Date.now() - secondPlaneTimer)) / 1000);
         ctx.fillText(`추가 비행기 남은 시간: ${remainingTime}초`, 10, 180);
@@ -3778,7 +3781,7 @@ function updateScore(points) {
         if (specialWeaponStock < SPECIAL_WEAPON_MAX_STOCK) {
             specialWeaponAccumulatedPoints += points;
             
-            // 즉시 보유 개수 증가 처리 (1000점 도달 시 즉시 반영)
+            // 즉시 보유 개수 증가 처리 (4000점 도달 시 즉시 반영)
             while (specialWeaponAccumulatedPoints >= SPECIAL_WEAPON_STOCK_POINTS && specialWeaponStock < SPECIAL_WEAPON_MAX_STOCK) {
                 specialWeaponStock++;
                 specialWeaponAccumulatedPoints -= SPECIAL_WEAPON_STOCK_POINTS;
@@ -3820,26 +3823,36 @@ function handleSecondPlane() {
         });
     }
     
-    // 디버깅을 위한 로그 추가
-    if (score >= 4000 && score % 4000 === 0 && !hasSecondPlane) {
-        console.log('추가 비행기 획득 조건 만족:', {
-            score: score,
-            scoreMod4000: score % 4000,
-            hasSecondPlane: hasSecondPlane
-        });
-        hasSecondPlane = true;
-        secondPlane.x = player.x - 60;
-        secondPlane.y = player.y;
-        secondPlaneTimer = Date.now(); // 타이머 시작
-        console.log('추가 비행기 활성화:', {
-            x: secondPlane.x,
-            y: secondPlane.y,
-            timer: secondPlaneTimer
-        });
-        // 두 번째 비행기 획득 메시지
-        ctx.fillStyle = 'yellow';
-        ctx.font = '40px Arial';
-        ctx.fillText('추가 비행기 획득!', canvas.width/2 - 120, canvas.height/2 + 100);  // +100 추가
+    // 점수 임계값을 넘거나 도달했을 때 처리 (프레임 스킵/가변 점수 보상 대응)
+    if (score >= nextPlaneThreshold) {
+        // 비행기가 이미 활성화되어 있으면 임계값만 앞으로 당김
+        if (hasSecondPlane) {
+            while (nextPlaneThreshold <= score) {
+                nextPlaneThreshold += 4000;
+            }
+        } else {
+            // 비행기가 없으면 스폰하고 다음 임계값 설정
+            console.log('추가 비행기 획득 조건 만족:', {
+                score: score,
+                threshold: nextPlaneThreshold,
+                hasSecondPlane: hasSecondPlane
+            });
+            hasSecondPlane = true;
+            secondPlane.x = player.x - 60;
+            secondPlane.y = player.y;
+            secondPlaneTimer = Date.now(); // 타이머 시작
+            nextPlaneThreshold += 4000;
+            console.log('추가 비행기 활성화:', {
+                x: secondPlane.x,
+                y: secondPlane.y,
+                timer: secondPlaneTimer,
+                nextPlaneThreshold: nextPlaneThreshold
+            });
+            // 두 번째 비행기 획득 메시지
+            ctx.fillStyle = 'yellow';
+            ctx.font = '40px Arial';
+            ctx.fillText('추가 비행기 획득!', canvas.width/2 - 120, canvas.height/2 + 100);  // +100 추가
+        }
     }
 
     if (hasSecondPlane) {
